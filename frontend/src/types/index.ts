@@ -1,8 +1,3 @@
-export interface PersonTagBrief {
-  id: number;
-  name: string;
-}
-
 export interface Photo {
   id: number;
   file_path: string;
@@ -16,7 +11,6 @@ export interface Photo {
   taken_at: string | null;
   is_favorite: boolean;
   thumbnail_url: string;
-  person_tags: PersonTagBrief[];
 }
 
 export interface PhotoListResponse {
@@ -32,17 +26,9 @@ export interface NeighborsResponse {
   next_id: number | null;
 }
 
-export interface PersonTag {
-  id: number;
-  name: string;
-  created_at: string;
-  photo_count: number;
-}
-
 export interface Settings {
   root_folder: string;
   extensions: string;
-  slideshow_interval: string;
   thumbnail_size: string;
 }
 
@@ -56,3 +42,25 @@ export interface ScanStatus {
 
 export type SortBy = 'created_at' | 'modified_at' | 'taken_at' | 'file_name' | 'random';
 export type SortOrder = 'asc' | 'desc';
+
+export interface FolderNode {
+  name: string;
+  path: string;
+  children: FolderNode[];
+}
+
+export interface FolderTreeResponse {
+  root: string;
+  folders: FolderNode[];
+}
+
+export interface SearchResult {
+  type: 'folder' | 'file';
+  name: string;
+  path: string;
+  photo_id?: number;
+}
+
+export interface SearchResponse {
+  results: SearchResult[];
+}

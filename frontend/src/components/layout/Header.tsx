@@ -1,12 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export function Header() {
   const location = useLocation();
+  const { t } = useTranslation();
 
   const navItems = [
-    { path: '/', label: 'Gallery' },
-    { path: '/people', label: 'People' },
-    { path: '/settings', label: 'Settings' },
+    { path: '/', label: t('nav.gallery') },
+    { path: '/settings', label: t('nav.settings') },
   ];
 
   return (

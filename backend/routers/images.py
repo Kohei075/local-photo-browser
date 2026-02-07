@@ -26,6 +26,10 @@ def get_full_image(photo_id: int, db: Session = Depends(get_db)):
         "jpeg": "image/jpeg",
         "png": "image/png",
         "webp": "image/webp",
+        "gif": "image/gif",
+        "bmp": "image/bmp",
+        "tiff": "image/tiff",
+        "tif": "image/tiff",
     }
     media_type = media_type_map.get(photo.extension, "image/jpeg")
 

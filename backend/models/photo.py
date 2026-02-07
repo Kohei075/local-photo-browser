@@ -1,5 +1,4 @@
 from sqlalchemy import Column, Integer, Text, Index
-from sqlalchemy.orm import relationship
 
 from database import Base
 
@@ -20,13 +19,6 @@ class Photo(Base):
     is_favorite = Column(Integer, nullable=False, default=0)
     thumbnail_path = Column(Text, nullable=True)
     scanned_at = Column(Text, nullable=False)
-
-    person_tags = relationship(
-        "PersonTag",
-        secondary="photo_persons",
-        back_populates="photos",
-        lazy="selectin",
-    )
 
     __table_args__ = (
         Index("ix_photos_file_path", "file_path"),

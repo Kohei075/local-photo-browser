@@ -1,6 +1,7 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import type { Photo } from '../../types';
 import { ZoomControls } from './ZoomControls';
+import { useTranslation } from '../../i18n/useTranslation';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -10,8 +11,11 @@ export function PhotoViewer({ photo }: PhotoViewerProps) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const dragStart = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
+  const viewerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
 
   const handleZoomIn = useCallback(() => {
     setScale((s) => Math.min(s * 1.3, 5));
@@ -59,6 +63,23 @@ export function PhotoViewer({ photo }: PhotoViewerProps) {
     setIsDragging(false);
   }, []);
 
+  const toggleFullscreen = useCallback(async () => {
+    if (!viewerRef.current) return;
+    if (!document.fullscreenElement) {
+      await viewerRef.current.requestFullscreen();
+    } else {
+      await document.exitFullscreen();
+    }
+  }, []);
+
+  useEffect(() => {
+    const handler = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener('fullscreenchange', handler);
+    return () => document.removeEventListener('fullscreenchange', handler);
+  }, []);
+
   // Reset zoom when photo changes
   useState(() => {
     setScale(1);
@@ -66,7 +87,7 @@ export function PhotoViewer({ photo }: PhotoViewerProps) {
   });
 
   return (
-    <div className="photo-viewer">
+    <div className="photo-viewer" ref={viewerRef}>
       <div
         className="photo-viewer-container"
         ref={containerRef}
@@ -87,6 +108,13 @@ export function PhotoViewer({ photo }: PhotoViewerProps) {
           draggable={false}
         />
       </div>
+      <button
+        className="fullscreen-btn"
+        onClick={toggleFullscreen}
+        title={isFullscreen ? t('viewer.exitFullscreen') : t('viewer.fullscreen')}
+      >
+        {isFullscreen ? '\u2716' : '\u26F6'}
+      </button>
       <ZoomControls
         scale={scale}
         onZoomIn={handleZoomIn}

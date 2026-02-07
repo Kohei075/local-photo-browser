@@ -1,13 +1,15 @@
+import json
 import os
 import shutil
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from database import get_db, Base, engine, SessionLocal, init_db
 from models.setting import Setting
-from schemas.setting import SettingsResponse, SettingsUpdate
+from models.photo import Photo
+from schemas.setting import SettingsResponse, SettingsUpdate, ExcludedFoldersResponse, ExcludedFoldersUpdate
 from config import THUMBNAIL_DIR
 
 router = APIRouter()
@@ -26,7 +28,21 @@ def get_settings(db: Session = Depends(get_db)):
 
 @router.put("/settings", response_model=SettingsResponse)
 def update_settings(data: SettingsUpdate, db: Session = Depends(get_db)):
+    if data.root_folder is not None and data.root_folder.strip():
+        if not os.path.isdir(data.root_folder.strip()):
+            raise HTTPException(status_code=400, detail="Folder not found")
+
     now = datetime.now().isoformat()
+
+    # Clear excluded folders when root_folder changes
+    if data.root_folder is not None:
+        old_root = get_settings_dict(db).get("root_folder", "")
+        if old_root != data.root_folder.strip():
+            ef = db.query(Setting).filter(Setting.key == "excluded_folders").first()
+            if ef:
+                ef.value = "[]"
+                ef.updated_at = now
+
     update_data = data.model_dump(exclude_none=True)
     for key, value in update_data.items():
         setting = db.query(Setting).filter(Setting.key == key).first()
@@ -57,3 +73,32 @@ def reset_db():
     Base.metadata.drop_all(bind=engine)
     init_db()
     return {"message": "Database reset complete"}
+
+
+@router.get("/settings/excluded-folders", response_model=ExcludedFoldersResponse)
+def get_excluded_folders(db: Session = Depends(get_db)):
+    setting = db.query(Setting).filter(Setting.key == "excluded_folders").first()
+    excluded = json.loads(setting.value) if setting else []
+    return ExcludedFoldersResponse(excluded_folders=excluded)
+
+
+@router.put("/settings/excluded-folders", response_model=ExcludedFoldersResponse)
+def update_excluded_folders(data: ExcludedFoldersUpdate, db: Session = Depends(get_db)):
+    now = datetime.now().isoformat()
+    excluded = data.excluded_folders
+
+    setting = db.query(Setting).filter(Setting.key == "excluded_folders").first()
+    if setting:
+        setting.value = json.dumps(excluded)
+        setting.updated_at = now
+    else:
+        db.add(Setting(key="excluded_folders", value=json.dumps(excluded), updated_at=now))
+
+    # Delete photos from excluded folders
+    for folder in excluded:
+        norm_folder = os.path.normpath(folder)
+        prefix = norm_folder + os.sep
+        db.query(Photo).filter(Photo.file_path.like(prefix + "%")).delete(synchronize_session=False)
+    db.commit()
+
+    return ExcludedFoldersResponse(excluded_folders=excluded)

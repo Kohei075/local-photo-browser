@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models.photo import Photo
-from models.photo_person import PhotoPerson
 from schemas.photo import PhotoResponse, PhotoListResponse, NeighborsResponse
 
 router = APIRouter()
@@ -27,18 +26,16 @@ def photo_to_response(photo: Photo) -> PhotoResponse:
         taken_at=photo.taken_at,
         is_favorite=bool(photo.is_favorite),
         thumbnail_url=f"/api/images/{photo.id}/thumbnail",
-        person_tags=[{"id": t.id, "name": t.name} for t in photo.person_tags],
     )
 
 
-def build_query(db: Session, favorite_only: bool = False, person_tag_id: Optional[int] = None):
+def build_query(db: Session, favorite_only: bool = False, folder_path: Optional[str] = None):
     query = db.query(Photo)
     if favorite_only:
         query = query.filter(Photo.is_favorite == 1)
-    if person_tag_id is not None:
-        query = query.join(PhotoPerson, Photo.id == PhotoPerson.photo_id).filter(
-            PhotoPerson.person_tag_id == person_tag_id
-        )
+    if folder_path is not None:
+        prefix = folder_path.rstrip("/\\")
+        query = query.filter(Photo.file_path.like(prefix + "%"))
     return query
 
 
@@ -49,10 +46,10 @@ def get_photos(
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
     favorite_only: bool = Query(False),
-    person_tag_id: Optional[int] = Query(None),
+    folder_path: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    query = build_query(db, favorite_only, person_tag_id)
+    query = build_query(db, favorite_only, folder_path)
     total = query.count()
 
     sort_column_map = {
@@ -86,10 +83,10 @@ def get_photos(
 @router.get("/photos/random", response_model=PhotoResponse)
 def get_random_photo(
     favorite_only: bool = Query(False),
-    person_tag_id: Optional[int] = Query(None),
+    folder_path: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    query = build_query(db, favorite_only, person_tag_id)
+    query = build_query(db, favorite_only, folder_path)
     photo = query.order_by(func.random()).first()
     if not photo:
         raise HTTPException(status_code=404, detail="No photos found")
@@ -110,7 +107,7 @@ def get_neighbors(
     sort_by: str = Query("created_at"),
     sort_order: str = Query("desc"),
     favorite_only: bool = Query(False),
-    person_tag_id: Optional[int] = Query(None),
+    folder_path: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
     sort_column_map = {
@@ -125,7 +122,7 @@ def get_neighbors(
     if not current:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    base_query = build_query(db, favorite_only, person_tag_id)
+    base_query = build_query(db, favorite_only, folder_path)
     current_val = getattr(current, sort_by if sort_by in sort_column_map else "created_at")
 
     if sort_order == "desc":

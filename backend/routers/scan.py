@@ -1,3 +1,5 @@
+import json
+
 from fastapi import APIRouter, BackgroundTasks, Depends
 from sqlalchemy.orm import Session
 
@@ -15,9 +17,11 @@ def run_scan():
         root_folder = settings.get("root_folder", "")
         extensions_str = settings.get("extensions", "jpg,jpeg,png,webp")
         extensions = {e.strip().lower() for e in extensions_str.split(",") if e.strip()}
+        excluded_str = settings.get("excluded_folders", "[]")
+        excluded_folders = set(json.loads(excluded_str))
 
         if root_folder:
-            scan_folder(root_folder, extensions, db)
+            scan_folder(root_folder, extensions, db, excluded_folders)
     finally:
         db.close()
 

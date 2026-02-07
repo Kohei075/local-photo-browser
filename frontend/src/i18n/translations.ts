@@ -1,0 +1,97 @@
+export type Lang = 'ja' | 'en';
+
+const translations = {
+  // Header
+  'nav.gallery': { ja: 'ギャラリー', en: 'Gallery' },
+  'nav.settings': { ja: '設定', en: 'Settings' },
+
+  // Grid
+  'grid.photos': { ja: '枚', en: 'photos' },
+  'grid.sortBy': { ja: '並び順', en: 'Sort by' },
+  'grid.sortCreated': { ja: '作成日', en: 'Created Date' },
+  'grid.sortModified': { ja: '更新日', en: 'Modified Date' },
+  'grid.sortTaken': { ja: '撮影日', en: 'Taken Date' },
+  'grid.sortFileName': { ja: 'ファイル名', en: 'File Name' },
+  'grid.sortRandom': { ja: 'ランダム', en: 'Random' },
+  'grid.newestFirst': { ja: '新しい順', en: 'Newest First' },
+  'grid.oldestFirst': { ja: '古い順', en: 'Oldest First' },
+  'grid.azOrder': { ja: 'A→Z', en: 'A→Z' },
+  'grid.zaOrder': { ja: 'Z→A', en: 'Z→A' },
+  'grid.empty': { ja: '写真がありません。設定画面でフォルダを指定してスキャンを実行してください。', en: 'No photos found. Go to Settings to set your photo folder and run a scan.' },
+  'grid.loading': { ja: '写真を読み込み中...', en: 'Loading photos...' },
+
+  // Filter
+  'filter.favoritesOnly': { ja: 'お気に入りのみ', en: 'Favorites only' },
+  'filter.clear': { ja: 'フィルタ解除', en: 'Clear Filters' },
+
+  // Sidebar
+  'sidebar.folders': { ja: 'フォルダ', en: 'Folders' },
+  'sidebar.searchPlaceholder': { ja: 'ファイル/フォルダを検索...', en: 'Search files/folders...' },
+  'sidebar.searching': { ja: '検索中...', en: 'Searching...' },
+  'sidebar.noResults': { ja: '結果なし', en: 'No results' },
+  'sidebar.allPhotos': { ja: 'すべての写真', en: 'All Photos' },
+  'sidebar.noFolders': { ja: 'スキャン済みフォルダなし', en: 'No folders scanned' },
+
+  // Viewer
+  'viewer.prev': { ja: '前へ', en: 'Previous' },
+  'viewer.next': { ja: '次へ', en: 'Next' },
+  'viewer.random': { ja: 'ランダム', en: 'Random' },
+  'viewer.fullscreen': { ja: '全画面表示', en: 'Fullscreen' },
+  'viewer.exitFullscreen': { ja: '全画面解除', en: 'Exit Fullscreen' },
+
+  // Settings
+  'settings.title': { ja: '設定', en: 'Settings' },
+  'settings.photoFolder': { ja: '写真フォルダ', en: 'Photo Folder' },
+  'settings.rootFolder': { ja: 'ルートフォルダ:', en: 'Root Folder Path:' },
+  'settings.extensions': { ja: '対象拡張子:', en: 'File Extensions:' },
+  'settings.save': { ja: '保存', en: 'Save Settings' },
+  'settings.saved': { ja: '設定を保存しました', en: 'Settings saved successfully' },
+  'settings.scan': { ja: 'スキャン', en: 'Scan Photos' },
+  'settings.startScan': { ja: 'スキャン開始', en: 'Start Scan' },
+  'settings.scanning': { ja: 'スキャン中...', en: 'Scanning...' },
+  'settings.scanComplete': { ja: 'スキャン完了: {count}件処理しました', en: 'Scan complete: {count} files processed' },
+  'settings.filesProcessed': { ja: '{processed} / {total} 件処理済み', en: '{processed} / {total} files processed' },
+  'settings.scanInfo': { ja: 'スキャン済み: {count}件', en: 'Scanned: {count} photos' },
+  'settings.scanFolder': { ja: 'フォルダ: {path}', en: 'Folder: {path}' },
+  'settings.scanNoData': { ja: 'スキャン済みデータなし', en: 'No scanned data' },
+  'settings.folderNotFound': { ja: '指定されたフォルダが見つかりません', en: 'The specified folder was not found' },
+  'settings.folderSelect': { ja: 'スキャン対象フォルダ', en: 'Folders to Scan' },
+  'settings.folderSelectDesc': { ja: 'スキャン・ギャラリーに含めるフォルダを選択してください。', en: 'Select folders to include in scan and gallery.' },
+  'settings.saveSelection': { ja: '選択を保存', en: 'Save Selection' },
+  'settings.langLabel': { ja: '表示言語:', en: 'Display Language:' },
+  'settings.maintenance': { ja: 'メンテナンス', en: 'Maintenance' },
+  'settings.clearCache': { ja: 'サムネイルキャッシュ削除', en: 'Clear Thumbnail Cache' },
+  'settings.resetDb': { ja: 'データベースリセット', en: 'Reset Database' },
+  'settings.resetConfirm': { ja: 'データベースをリセットしますか？お気に入りが全て削除されます。', en: 'Reset database? All favorites will be lost.' },
+} as const;
+
+type TranslationKey = keyof typeof translations;
+
+let currentLang: Lang = (localStorage.getItem('app_language') as Lang) || 'ja';
+const listeners = new Set<() => void>();
+
+export function getLang(): Lang {
+  return currentLang;
+}
+
+export function setLang(lang: Lang) {
+  currentLang = lang;
+  localStorage.setItem('app_language', lang);
+  listeners.forEach((fn) => fn());
+}
+
+export function t(key: TranslationKey, params?: Record<string, string | number>): string {
+  const entry = translations[key];
+  let text: string = entry?.[currentLang] ?? entry?.['en'] ?? key;
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      text = text.replace(`{${k}}`, String(v));
+    }
+  }
+  return text;
+}
+
+export function subscribe(fn: () => void) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}

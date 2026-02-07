@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Photo, PersonTag, SortBy, SortOrder, ScanStatus } from '../types';
+import type { Photo, SortBy, SortOrder, ScanStatus, FolderNode } from '../types';
 
 interface AppState {
   // Photos
@@ -14,20 +14,18 @@ interface AppState {
   sortBy: SortBy;
   sortOrder: SortOrder;
   favoriteOnly: boolean;
-  personTagId: number | null;
 
   // Viewer
   currentPhotoId: number | null;
 
-  // Slideshow
-  isSlideshowPlaying: boolean;
-  slideshowInterval: number;
-
   // Scan
   scanStatus: ScanStatus | null;
 
-  // Tags
-  personTags: PersonTag[];
+  // Folder sidebar
+  folderTree: FolderNode[];
+  folderRoot: string;
+  selectedFolderPath: string | null;
+  isSidebarOpen: boolean;
 
   // Actions
   setPhotos: (photos: Photo[], total: number, page: number, perPage: number, totalPages: number) => void;
@@ -36,14 +34,13 @@ interface AppState {
   setSortBy: (sortBy: SortBy) => void;
   setSortOrder: (sortOrder: SortOrder) => void;
   setFavoriteOnly: (favoriteOnly: boolean) => void;
-  setPersonTagId: (personTagId: number | null) => void;
   setCurrentPhotoId: (id: number | null) => void;
-  setSlideshowPlaying: (playing: boolean) => void;
-  setSlideshowInterval: (interval: number) => void;
   setScanStatus: (status: ScanStatus | null) => void;
-  setPersonTags: (tags: PersonTag[]) => void;
   updatePhoto: (photo: Photo) => void;
   resetFilters: () => void;
+  setFolderTree: (root: string, folders: FolderNode[]) => void;
+  setSelectedFolderPath: (path: string | null) => void;
+  setIsSidebarOpen: (open: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -57,16 +54,15 @@ export const useAppStore = create<AppState>((set) => ({
   sortBy: 'created_at',
   sortOrder: 'desc',
   favoriteOnly: false,
-  personTagId: null,
 
   currentPhotoId: null,
 
-  isSlideshowPlaying: false,
-  slideshowInterval: 5,
-
   scanStatus: null,
 
-  personTags: [],
+  folderTree: [],
+  folderRoot: '',
+  selectedFolderPath: null,
+  isSidebarOpen: true,
 
   setPhotos: (photos, total, page, perPage, totalPages) =>
     set({ photos, totalPhotos: total, page, perPage, totalPages }),
@@ -81,15 +77,14 @@ export const useAppStore = create<AppState>((set) => ({
   setSortBy: (sortBy) => set({ sortBy, photos: [], page: 1 }),
   setSortOrder: (sortOrder) => set({ sortOrder, photos: [], page: 1 }),
   setFavoriteOnly: (favoriteOnly) => set({ favoriteOnly, photos: [], page: 1 }),
-  setPersonTagId: (personTagId) => set({ personTagId, photos: [], page: 1 }),
   setCurrentPhotoId: (currentPhotoId) => set({ currentPhotoId }),
-  setSlideshowPlaying: (isSlideshowPlaying) => set({ isSlideshowPlaying }),
-  setSlideshowInterval: (slideshowInterval) => set({ slideshowInterval }),
   setScanStatus: (scanStatus) => set({ scanStatus }),
-  setPersonTags: (personTags) => set({ personTags }),
   updatePhoto: (photo) =>
     set((state) => ({
       photos: state.photos.map((p) => (p.id === photo.id ? photo : p)),
     })),
-  resetFilters: () => set({ favoriteOnly: false, personTagId: null, photos: [], page: 1 }),
+  resetFilters: () => set({ favoriteOnly: false, selectedFolderPath: null, photos: [], page: 1 }),
+  setFolderTree: (folderRoot, folderTree) => set({ folderRoot, folderTree }),
+  setSelectedFolderPath: (selectedFolderPath) => set({ selectedFolderPath, photos: [], page: 1 }),
+  setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
 }));

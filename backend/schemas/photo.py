@@ -2,13 +2,6 @@ from pydantic import BaseModel
 from typing import Optional
 
 
-class PersonTagBrief(BaseModel):
-    id: int
-    name: str
-
-    model_config = {"from_attributes": True}
-
-
 class PhotoResponse(BaseModel):
     id: int
     file_path: str
@@ -22,7 +15,6 @@ class PhotoResponse(BaseModel):
     taken_at: Optional[str] = None
     is_favorite: bool
     thumbnail_url: str
-    person_tags: list[PersonTagBrief] = []
 
     model_config = {"from_attributes": True}
 

@@ -5,7 +5,14 @@
       "Bash(cmd /c \"where npm\")",
       "Bash(cmd /c \"where npm 2>&1 & where node 2>&1 & where python 2>&1\")",
       "Bash(cmd /c \"echo %PATH%\")",
-      "Bash(powershell:*)"
+      "Bash(powershell:*)",
+      "Bash(dir:*)",
+      "Bash(del \"C:\\\\Users\\\\PC_User\\\\Desktop\\\\Gitリポジトリ\\\\web-pic-browser\\\\frontend\\\\src\\\\components\\\\settings\\\\SlideshowSetting.tsx\")",
+      "Bash(py scripts/start.py:*)",
+      "Bash(curl:*)",
+      "Bash(py -m json.tool:*)",
+      "Bash(py -c:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }

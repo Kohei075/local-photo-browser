@@ -1,10 +1,13 @@
 import os
+import logging
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
 from database import init_db
+
+logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
 app = FastAPI(title="Web Pic Browser", version="1.0.0")
 
@@ -16,14 +19,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from routers import settings, scan, photos, images, favorites, tags
+from routers import settings, scan, photos, images, favorites, folders
 
 app.include_router(settings.router, prefix="/api")
 app.include_router(scan.router, prefix="/api")
 app.include_router(photos.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(favorites.router, prefix="/api")
-app.include_router(tags.router, prefix="/api")
+app.include_router(folders.router, prefix="/api")
 
 # Serve frontend static files in production
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")

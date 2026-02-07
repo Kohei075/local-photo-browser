@@ -6,25 +6,23 @@ import { useAppStore } from '../stores/appStore';
 export function useSettings() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setScanStatus, setSlideshowInterval } = useAppStore();
+  const { setScanStatus } = useAppStore();
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.get<Settings>('/settings');
       setSettings(data);
-      setSlideshowInterval(parseInt(data.slideshow_interval) || 5);
     } finally {
       setLoading(false);
     }
-  }, [setSlideshowInterval]);
+  }, []);
 
   const updateSettings = useCallback(async (update: Partial<Settings>) => {
     const data = await api.put<Settings>('/settings', update);
     setSettings(data);
-    setSlideshowInterval(parseInt(data.slideshow_interval) || 5);
     return data;
-  }, [setSlideshowInterval]);
+  }, []);
 
   const startScan = useCallback(async () => {
     await api.post('/scan');

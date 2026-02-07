@@ -40,7 +40,6 @@ def init_db():
         defaults = {
             "root_folder": "",
             "extensions": "jpg,jpeg,png,webp",
-            "slideshow_interval": "5",
             "thumbnail_size": "300",
         }
         for key, value in defaults.items():

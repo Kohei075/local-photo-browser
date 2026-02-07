@@ -5,7 +5,7 @@ import type { PhotoListResponse } from '../types';
 
 export function usePhotos() {
   const {
-    page, perPage, sortBy, sortOrder, favoriteOnly, personTagId,
+    page, perPage, sortBy, sortOrder, favoriteOnly, selectedFolderPath,
     isLoadingPhotos, setPhotos, appendPhotos, setLoadingPhotos,
   } = useAppStore();
 
@@ -19,8 +19,8 @@ export function usePhotos() {
         sort_order: sortOrder,
         favorite_only: String(favoriteOnly),
       });
-      if (personTagId !== null) {
-        params.set('person_tag_id', String(personTagId));
+      if (selectedFolderPath !== null) {
+        params.set('folder_path', selectedFolderPath);
       }
       const data = await api.get<PhotoListResponse>(`/photos?${params}`);
       if (append) {
@@ -31,7 +31,7 @@ export function usePhotos() {
     } finally {
       setLoadingPhotos(false);
     }
-  }, [perPage, sortBy, sortOrder, favoriteOnly, personTagId, setPhotos, appendPhotos, setLoadingPhotos]);
+  }, [perPage, sortBy, sortOrder, favoriteOnly, selectedFolderPath, setPhotos, appendPhotos, setLoadingPhotos]);
 
   const loadMore = useCallback(() => {
     if (!isLoadingPhotos) {

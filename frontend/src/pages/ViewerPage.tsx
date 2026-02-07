@@ -3,20 +3,17 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAppStore } from '../stores/appStore';
 import { useFavorite } from '../hooks/useFavorite';
-import { useSlideshow } from '../hooks/useSlideshow';
 import { useKeyboardNav } from '../hooks/useKeyboardNav';
 import { PhotoViewer } from '../components/viewer/PhotoViewer';
 import { NavigationControls } from '../components/viewer/NavigationControls';
-import { SlideshowControls } from '../components/viewer/SlideshowControls';
 import { FavoriteButton } from '../components/viewer/FavoriteButton';
-import { TagManager } from '../components/viewer/TagManager';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import type { Photo, NeighborsResponse } from '../types';
 
 export function ViewerPage() {
   const { photoId } = useParams<{ photoId: string }>();
   const navigate = useNavigate();
-  const { sortBy, sortOrder, favoriteOnly, personTagId } = useAppStore();
+  const { sortBy, sortOrder, favoriteOnly, selectedFolderPath } = useAppStore();
   const { toggleFavorite } = useFavorite();
 
   const [photo, setPhoto] = useState<Photo | null>(null);
@@ -26,11 +23,15 @@ export function ViewerPage() {
   const fetchPhoto = useCallback(async (id: string) => {
     setLoading(true);
     try {
+      const neighborParams = new URLSearchParams({
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        favorite_only: String(favoriteOnly),
+      });
+      if (selectedFolderPath !== null) neighborParams.set('folder_path', selectedFolderPath);
       const [photoData, neighborsData] = await Promise.all([
         api.get<Photo>(`/photos/${id}`),
-        api.get<NeighborsResponse>(
-          `/photos/${id}/neighbors?sort_by=${sortBy}&sort_order=${sortOrder}&favorite_only=${favoriteOnly}${personTagId !== null ? `&person_tag_id=${personTagId}` : ''}`
-        ),
+        api.get<NeighborsResponse>(`/photos/${id}/neighbors?${neighborParams}`),
       ]);
       setPhoto(photoData);
       setNeighbors(neighborsData);
@@ -39,7 +40,7 @@ export function ViewerPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, favoriteOnly, personTagId, navigate]);
+  }, [sortBy, sortOrder, favoriteOnly, selectedFolderPath, navigate]);
 
   useEffect(() => {
     if (photoId) fetchPhoto(photoId);
@@ -53,18 +54,12 @@ export function ViewerPage() {
     const params = new URLSearchParams({
       favorite_only: String(favoriteOnly),
     });
-    if (personTagId !== null) params.set('person_tag_id', String(personTagId));
+    if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
     try {
       const randomPhoto = await api.get<Photo>(`/photos/random?${params}`);
       navigate(`/viewer/${randomPhoto.id}`);
     } catch { /* no photos */ }
-  }, [favoriteOnly, personTagId, navigate]);
-
-  const handleSlideshowNext = useCallback((nextPhoto: Photo) => {
-    navigate(`/viewer/${nextPhoto.id}`);
-  }, [navigate]);
-
-  const { toggle: toggleSlideshow, isPlaying } = useSlideshow(handleSlideshowNext);
+  }, [favoriteOnly, selectedFolderPath, navigate]);
 
   const handleToggleFavorite = useCallback(async () => {
     if (photo) {
@@ -76,7 +71,6 @@ export function ViewerPage() {
   useKeyboardNav({
     onPrev: () => goTo(neighbors.prev_id),
     onNext: () => goTo(neighbors.next_id),
-    onToggleSlideshow: toggleSlideshow,
     onToggleFavorite: handleToggleFavorite,
     onEscape: () => navigate('/'),
   });
@@ -92,7 +86,6 @@ export function ViewerPage() {
         <span className="viewer-filename">{photo.file_name}</span>
         <div className="viewer-top-actions">
           <FavoriteButton photo={photo} onToggle={handleToggleFavorite} />
-          <SlideshowControls isPlaying={isPlaying} onToggle={toggleSlideshow} />
         </div>
       </div>
 
@@ -107,7 +100,6 @@ export function ViewerPage() {
       />
 
       <div className="viewer-bottom-bar">
-        <TagManager photo={photo} onUpdate={() => { if (photoId) fetchPhoto(photoId); }} />
         <div className="viewer-info">
           {photo.width && photo.height && <span>{photo.width}x{photo.height}</span>}
           <span>{(photo.file_size / 1024 / 1024).toFixed(1)} MB</span>

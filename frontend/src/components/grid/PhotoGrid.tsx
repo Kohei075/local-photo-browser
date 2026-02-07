@@ -3,6 +3,7 @@ import { useAppStore } from '../../stores/appStore';
 import { usePhotos } from '../../hooks/usePhotos';
 import { PhotoCard } from './PhotoCard';
 import { LoadingSpinner } from '../common/LoadingSpinner';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export function PhotoGrid() {
   const { photos, page, totalPages, isLoadingPhotos } = useAppStore();
@@ -10,18 +11,19 @@ export function PhotoGrid() {
   const observerRef = useRef<HTMLDivElement>(null);
   const initialFetchDone = useRef(false);
 
-  const { sortBy, sortOrder, favoriteOnly, personTagId } = useAppStore();
+  const { sortBy, sortOrder, favoriteOnly, selectedFolderPath } = useAppStore();
+  const { t } = useTranslation();
 
   useEffect(() => {
     initialFetchDone.current = false;
-  }, [sortBy, sortOrder, favoriteOnly, personTagId]);
+  }, [sortBy, sortOrder, favoriteOnly, selectedFolderPath]);
 
   useEffect(() => {
     if (!initialFetchDone.current) {
       initialFetchDone.current = true;
       fetchPhotos(1);
     }
-  }, [fetchPhotos, sortBy, sortOrder, favoriteOnly, personTagId]);
+  }, [fetchPhotos, sortBy, sortOrder, favoriteOnly, selectedFolderPath]);
 
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -41,13 +43,13 @@ export function PhotoGrid() {
   }, [handleIntersect]);
 
   if (photos.length === 0 && isLoadingPhotos) {
-    return <LoadingSpinner message="Loading photos..." />;
+    return <LoadingSpinner message={t('grid.loading')} />;
   }
 
   if (photos.length === 0 && !isLoadingPhotos) {
     return (
       <div className="empty-state">
-        <p>No photos found. Go to Settings to set your photo folder and run a scan.</p>
+        <p>{t('grid.empty')}</p>
       </div>
     );
   }

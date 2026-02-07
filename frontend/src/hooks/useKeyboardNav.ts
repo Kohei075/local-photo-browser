@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 interface KeyboardNavOptions {
   onPrev?: () => void;
   onNext?: () => void;
-  onToggleSlideshow?: () => void;
   onToggleFavorite?: () => void;
   onEscape?: () => void;
 }
@@ -24,10 +23,6 @@ export function useKeyboardNav(options: KeyboardNavOptions) {
         case 'ArrowRight':
           e.preventDefault();
           options.onNext?.();
-          break;
-        case ' ':
-          e.preventDefault();
-          options.onToggleSlideshow?.();
           break;
         case 'f':
         case 'F':

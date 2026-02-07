@@ -1,15 +1,34 @@
 import { useState, useEffect, useRef } from 'react';
+import { api } from '../../api/client';
 import { useAppStore } from '../../stores/appStore';
+import { useTranslation } from '../../i18n/useTranslation';
+import type { PhotoListResponse } from '../../types';
 
 interface ScanButtonProps {
+  rootFolder: string;
   onStartScan: () => Promise<void>;
   onPollStatus: () => Promise<{ is_scanning: boolean }>;
 }
 
-export function ScanButton({ onStartScan, onPollStatus }: ScanButtonProps) {
+export function ScanButton({ rootFolder, onStartScan, onPollStatus }: ScanButtonProps) {
   const { scanStatus } = useAppStore();
   const [scanning, setScanning] = useState(false);
+  const [photoCount, setPhotoCount] = useState<number | null>(null);
   const pollRef = useRef<number | null>(null);
+  const { t } = useTranslation();
+
+  const fetchPhotoCount = async () => {
+    try {
+      const data = await api.get<PhotoListResponse>('/photos?per_page=1');
+      setPhotoCount(data.total);
+    } catch {
+      setPhotoCount(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchPhotoCount();
+  }, []);
 
   const handleScan = async () => {
     await onStartScan();
@@ -23,6 +42,7 @@ export function ScanButton({ onStartScan, onPollStatus }: ScanButtonProps) {
         if (!status.is_scanning) {
           setScanning(false);
           if (pollRef.current) clearInterval(pollRef.current);
+          fetchPhotoCount();
         }
       }, 1000);
     }
@@ -35,13 +55,25 @@ export function ScanButton({ onStartScan, onPollStatus }: ScanButtonProps) {
 
   return (
     <div className="setting-section">
-      <h3>Scan Photos</h3>
+      <h3>{t('settings.scan')}</h3>
+
+      <div className="scan-info">
+        {photoCount !== null && photoCount > 0 ? (
+          <>
+            <p className="scan-info-text">{t('settings.scanInfo', { count: photoCount })}</p>
+            {rootFolder && <p className="scan-info-text">{t('settings.scanFolder', { path: rootFolder })}</p>}
+          </>
+        ) : (
+          <p className="scan-info-text">{t('settings.scanNoData')}</p>
+        )}
+      </div>
+
       <button
         className="btn btn-primary"
         onClick={handleScan}
         disabled={!!isScanning}
       >
-        {isScanning ? 'Scanning...' : 'Start Scan'}
+        {isScanning ? t('settings.scanning') : t('settings.startScan')}
       </button>
 
       {isScanning && scanStatus && (
@@ -57,7 +89,7 @@ export function ScanButton({ onStartScan, onPollStatus }: ScanButtonProps) {
             />
           </div>
           <p className="scan-progress-text">
-            {scanStatus.processed} / {scanStatus.total} files processed
+            {t('settings.filesProcessed', { processed: scanStatus.processed, total: scanStatus.total })}
           </p>
           {scanStatus.current_file && (
             <p className="scan-current-file">{scanStatus.current_file}</p>
@@ -71,7 +103,7 @@ export function ScanButton({ onStartScan, onPollStatus }: ScanButtonProps) {
 
       {!isScanning && scanStatus && !scanStatus.error && scanStatus.total > 0 && (
         <p className="success-text">
-          Scan complete: {scanStatus.total} files processed.
+          {t('settings.scanComplete', { count: scanStatus.total })}
         </p>
       )}
     </div>

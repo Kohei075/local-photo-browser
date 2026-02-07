@@ -17,13 +17,6 @@ export function PhotoCard({ photo }: PhotoCardProps) {
         {photo.is_favorite && (
           <span className="photo-card-favorite" title="Favorite">&#9829;</span>
         )}
-        {photo.person_tags.length > 0 && (
-          <div className="photo-card-tags">
-            {photo.person_tags.map((tag) => (
-              <span key={tag.id} className="photo-card-tag">{tag.name}</span>
-            ))}
-          </div>
-        )}
       </div>
       <div className="photo-card-info">
         <span className="photo-card-name" title={photo.file_name}>{photo.file_name}</span>

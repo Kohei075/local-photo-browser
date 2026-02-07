@@ -1,14 +1,9 @@
-import { useEffect } from 'react';
 import { useAppStore } from '../../stores/appStore';
-import { useTags } from '../../hooks/useTags';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export function FilterBar() {
-  const { favoriteOnly, personTagId, personTags, setFavoriteOnly, setPersonTagId, resetFilters } = useAppStore();
-  const { fetchTags } = useTags();
-
-  useEffect(() => {
-    fetchTags();
-  }, [fetchTags]);
+  const { favoriteOnly, setFavoriteOnly, resetFilters } = useAppStore();
+  const { t } = useTranslation();
 
   return (
     <div className="filter-bar">
@@ -18,22 +13,12 @@ export function FilterBar() {
           checked={favoriteOnly}
           onChange={(e) => setFavoriteOnly(e.target.checked)}
         />
-        Favorites only
+        {t('filter.favoritesOnly')}
       </label>
 
-      <select
-        value={personTagId ?? ''}
-        onChange={(e) => setPersonTagId(e.target.value ? Number(e.target.value) : null)}
-      >
-        <option value="">All People</option>
-        {personTags.map((tag) => (
-          <option key={tag.id} value={tag.id}>{tag.name} ({tag.photo_count})</option>
-        ))}
-      </select>
-
-      {(favoriteOnly || personTagId !== null) && (
+      {favoriteOnly && (
         <button className="btn btn-sm" onClick={resetFilters}>
-          Clear Filters
+          {t('filter.clear')}
         </button>
       )}
     </div>

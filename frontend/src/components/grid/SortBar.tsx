@@ -1,22 +1,28 @@
 import { useAppStore } from '../../stores/appStore';
+import { useTranslation } from '../../i18n/useTranslation';
 import type { SortBy, SortOrder } from '../../types';
 
 export function SortBar() {
   const { sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos } = useAppStore();
+  const { t } = useTranslation();
 
   const sortOptions: { value: SortBy; label: string }[] = [
-    { value: 'created_at', label: 'Created Date' },
-    { value: 'modified_at', label: 'Modified Date' },
-    { value: 'taken_at', label: 'Taken Date' },
-    { value: 'file_name', label: 'File Name' },
-    { value: 'random', label: 'Random' },
+    { value: 'created_at', label: t('grid.sortCreated') },
+    { value: 'modified_at', label: t('grid.sortModified') },
+    { value: 'taken_at', label: t('grid.sortTaken') },
+    { value: 'file_name', label: t('grid.sortFileName') },
+    { value: 'random', label: t('grid.sortRandom') },
   ];
+
+  const orderLabel = sortBy === 'file_name'
+    ? { desc: t('grid.zaOrder'), asc: t('grid.azOrder') }
+    : { desc: t('grid.newestFirst'), asc: t('grid.oldestFirst') };
 
   return (
     <div className="sort-bar">
-      <span className="sort-bar-count">{totalPhotos} photos</span>
+      <span className="sort-bar-count">{totalPhotos} {t('grid.photos')}</span>
       <div className="sort-bar-controls">
-        <label>Sort: </label>
+        <label>{t('grid.sortBy')}: </label>
         <select
           value={sortBy}
           onChange={(e) => setSortBy(e.target.value as SortBy)}
@@ -30,8 +36,8 @@ export function SortBar() {
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
           >
-            <option value="desc">Newest First</option>
-            <option value="asc">Oldest First</option>
+            <option value="desc">{orderLabel.desc}</option>
+            <option value="asc">{orderLabel.asc}</option>
           </select>
         )}
       </div>
