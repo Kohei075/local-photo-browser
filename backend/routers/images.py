@@ -1,4 +1,6 @@
 import os
+import subprocess
+import sys
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
@@ -70,3 +72,25 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
         media_type="image/jpeg",
         headers={"Cache-Control": "max-age=3600"},
     )
+
+
+@router.post("/images/{photo_id}/reveal")
+def reveal_in_explorer(photo_id: int, db: Session = Depends(get_db)):
+    """Open the file's location in the OS file manager, selecting the file."""
+    photo = db.query(Photo).filter(Photo.id == photo_id).first()
+    if not photo:
+        raise HTTPException(status_code=404, detail="Photo not found")
+
+    fpath = long_path(photo.file_path)
+    if not os.path.isfile(fpath):
+        raise HTTPException(status_code=404, detail="Image file not found on disk")
+
+    if sys.platform == "win32":
+        subprocess.Popen(["explorer", "/select,", os.path.normpath(fpath)])
+    elif sys.platform == "darwin":
+        subprocess.Popen(["open", "-R", fpath])
+    else:
+        folder = os.path.dirname(fpath)
+        subprocess.Popen(["xdg-open", folder])
+
+    return {"message": "OK"}

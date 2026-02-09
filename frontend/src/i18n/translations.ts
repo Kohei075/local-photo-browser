@@ -38,6 +38,7 @@ const translations = {
   'viewer.randomPicks': { ja: '3枚ランダム表示', en: '3 Random Photos' },
   'viewer.backToPhoto': { ja: '写真に戻る', en: 'Back to Photo' },
   'viewer.backToGallery': { ja: 'ギャラリーに戻る', en: 'Back to Gallery' },
+  'viewer.openInExplorer': { ja: 'ファイルを開く', en: 'Open in Explorer' },
 
   // Settings
   'settings.title': { ja: '設定', en: 'Settings' },

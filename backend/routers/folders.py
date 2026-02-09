@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query
@@ -28,7 +29,10 @@ def _build_tree(folders: list[str], root_folder: str) -> list[dict]:
 
     def to_list(node: dict, current_path: str) -> list[dict]:
         result = []
-        for name in sorted(node.keys()):
+        def _nat_key(s: str):
+            return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', s)]
+
+        for name in sorted(node.keys(), key=_nat_key):
             child_path = f"{current_path}/{name}" if current_path else name
             children = to_list(node[name], child_path)
             result.append({
