@@ -12,6 +12,11 @@ from models.setting import Setting
 router = APIRouter()
 
 
+def _nat_sort_key(s: str):
+    """Natural sort key: splits string into text/number chunks for human-friendly ordering."""
+    return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', s)]
+
+
 def _build_tree(folders: list[str], root_folder: str) -> list[dict]:
     """Build a nested folder tree from a flat list of folder paths."""
     tree: dict = {}
@@ -29,10 +34,7 @@ def _build_tree(folders: list[str], root_folder: str) -> list[dict]:
 
     def to_list(node: dict, current_path: str) -> list[dict]:
         result = []
-        def _nat_key(s: str):
-            return [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', s)]
-
-        for name in sorted(node.keys(), key=_nat_key):
+        for name in sorted(node.keys(), key=_nat_sort_key):
             child_path = f"{current_path}/{name}" if current_path else name
             children = to_list(node[name], child_path)
             result.append({
@@ -72,22 +74,54 @@ def get_folders(db: Session = Depends(get_db)):
 
 
 @router.get("/folders/browse")
-def browse_folders(path: str = Query(""), max_depth: int = Query(10, ge=1, le=20)):
-    """Browse filesystem folders under a given root path."""
+def browse_folders(
+    path: str = Query(""),
+    max_depth: int = Query(10, ge=1, le=20),
+    extensions: str = Query(""),
+):
+    """Browse filesystem folders under a given root path.
+
+    If extensions is provided (comma-separated, e.g. "jpg,png"),
+    only folders that contain matching files (directly or in descendants)
+    are included in the tree.
+    """
     if not path or not os.path.isdir(path):
         return {"folders": []}
+
+    ext_set: set[str] | None = None
+    if extensions.strip():
+        ext_set = {e.strip().lower().lstrip(".") for e in extensions.split(",") if e.strip()}
+
+    def _has_matching_files(directory: str) -> bool:
+        """Check if directory directly contains any file with a target extension."""
+        try:
+            for entry in os.scandir(directory):
+                if entry.is_file(follow_symlinks=False):
+                    ext = os.path.splitext(entry.name)[1].lower().lstrip(".")
+                    if ext in ext_set:
+                        return True
+        except PermissionError:
+            pass
+        return False
 
     def build_tree(root: str, depth: int = 0) -> list[dict]:
         if depth >= max_depth:
             return []
         result = []
         try:
-            entries = sorted(os.scandir(root), key=lambda e: e.name.lower())
+            entries = sorted(os.scandir(root), key=lambda e: _nat_sort_key(e.name))
         except PermissionError:
             return result
         for entry in entries:
             if entry.is_dir(follow_symlinks=False) and not entry.name.startswith("."):
                 children = build_tree(entry.path, depth + 1)
+                # If extensions filter is active, skip folders with no matching files
+                # in this directory or any descendant
+                if ext_set is not None:
+                    has_files = _has_matching_files(entry.path)
+                    has_children = len(children) > 0
+                    if not has_files and not has_children:
+                        continue
                 result.append({
                     "name": entry.name,
                     "path": os.path.normpath(entry.path),

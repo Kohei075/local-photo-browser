@@ -5,11 +5,24 @@ import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { FolderTreeResponse, SearchResponse, FolderNode } from '../../types';
 
-function FolderTreeItem({ node, depth, onSelect }: { node: FolderNode; depth: number; onSelect: (path: string | null) => void }) {
+function FolderTreeItem({ node, depth, onSelect, expandToPath }: {
+  node: FolderNode; depth: number; onSelect: (path: string | null) => void; expandToPath: string | null;
+}) {
   const [isOpen, setIsOpen] = useState(false);
   const { selectedFolderPath } = useAppStore();
   const isSelected = selectedFolderPath === node.path;
   const hasChildren = node.children.length > 0;
+
+  // Auto-expand when this node is an ancestor of expandToPath
+  useEffect(() => {
+    if (expandToPath && hasChildren) {
+      const normExpand = expandToPath.replace(/\\/g, '/');
+      const normNode = node.path.replace(/\\/g, '/');
+      if (normExpand.startsWith(normNode + '/') || normExpand === normNode) {
+        setIsOpen(true);
+      }
+    }
+  }, [expandToPath, node.path, hasChildren]);
 
   return (
     <div>
@@ -34,7 +47,7 @@ function FolderTreeItem({ node, depth, onSelect }: { node: FolderNode; depth: nu
       {isOpen && hasChildren && (
         <div>
           {node.children.map((child) => (
-            <FolderTreeItem key={child.path} node={child} depth={depth + 1} onSelect={onSelect} />
+            <FolderTreeItem key={child.path} node={child} depth={depth + 1} onSelect={onSelect} expandToPath={expandToPath} />
           ))}
         </div>
       )}
@@ -47,6 +60,7 @@ export function FolderSidebar() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResponse['results']>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [expandToPath, setExpandToPath] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
@@ -93,6 +107,13 @@ export function FolderSidebar() {
       setSearchQuery('');
       setSearchResults([]);
     } else if (result.photo_id) {
+      // Extract the folder path from the file path and expand the tree to it
+      const lastSep = Math.max(result.path.lastIndexOf('\\'), result.path.lastIndexOf('/'));
+      if (lastSep > 0) {
+        setExpandToPath(result.path.substring(0, lastSep));
+      }
+      setSearchQuery('');
+      setSearchResults([]);
       navigate(`/viewer/${result.photo_id}`);
     }
   };
@@ -158,7 +179,7 @@ export function FolderSidebar() {
             </div>
           )}
           {folderTree.map((node) => (
-            <FolderTreeItem key={node.path} node={node} depth={0} onSelect={handleFolderSelect} />
+            <FolderTreeItem key={node.path} node={node} depth={0} onSelect={handleFolderSelect} expandToPath={expandToPath} />
           ))}
           {folderTree.length === 0 && (
             <div className="sidebar-empty">{t('sidebar.noFolders')}</div>

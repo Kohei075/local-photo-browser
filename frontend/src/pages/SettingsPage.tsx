@@ -24,7 +24,7 @@ export function SettingsPage() {
         onSave={(folder, exts) => updateSettings({ root_folder: folder, extensions: exts })}
       />
 
-      <FolderSelectTree rootFolder={settings.root_folder} />
+      <FolderSelectTree rootFolder={settings.root_folder} extensions={settings.extensions} />
 
       <ScanButton
         rootFolder={settings.root_folder}

@@ -5,6 +5,7 @@ import type { FolderNode } from '../../types';
 
 interface FolderSelectTreeProps {
   rootFolder: string;
+  extensions: string;
 }
 
 function getAllPaths(node: FolderNode): string[] {
@@ -91,12 +92,19 @@ function FolderCheckItem({
   );
 }
 
-export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
+function getLeafPaths(node: FolderNode): string[] {
+  if (node.children.length === 0) return [node.path];
+  return node.children.flatMap(getLeafPaths);
+}
+
+export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreeProps) {
   const [folders, setFolders] = useState<FolderNode[]>([]);
   const [excluded, setExcluded] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [rescanning, setRescanning] = useState(false);
+  const [rescanResult, setRescanResult] = useState<string | null>(null);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -107,7 +115,7 @@ export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
     setLoading(true);
     Promise.all([
       api.get<{ folders: FolderNode[] }>(
-        `/folders/browse?path=${encodeURIComponent(rootFolder)}`,
+        `/folders/browse?path=${encodeURIComponent(rootFolder)}&extensions=${encodeURIComponent(extensions)}`,
       ),
       api.get<{ excluded_folders: string[] }>('/settings/excluded-folders'),
     ])
@@ -117,7 +125,7 @@ export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [rootFolder]);
+  }, [rootFolder, extensions]);
 
   const toggleFolder = useCallback(
     (node: FolderNode, ancestors: string[]) => {
@@ -152,6 +160,41 @@ export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
       // ignore
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleRescan = async () => {
+    // Collect leaf folder paths that are not excluded
+    const selectedLeaves = folders
+      .flatMap(getLeafPaths)
+      .filter((p) => !excluded.has(p));
+    if (selectedLeaves.length === 0) return;
+
+    setRescanning(true);
+    setRescanResult(null);
+    try {
+      await api.post('/scan/partial', { folders: selectedLeaves });
+      // Poll scan status until done
+      const poll = async () => {
+        const status = await api.get<{
+          is_scanning: boolean;
+          processed: number;
+          total: number;
+        }>('/scan/status');
+        if (status.is_scanning) {
+          setTimeout(poll, 1000);
+        } else {
+          setRescanning(false);
+          setRescanResult(
+            t('settings.rescanComplete', { count: status.processed }),
+          );
+          setTimeout(() => setRescanResult(null), 5000);
+        }
+      };
+      // Small delay before first poll to let the background task start
+      setTimeout(poll, 500);
+    } catch {
+      setRescanning(false);
     }
   };
 
@@ -199,7 +242,7 @@ export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
           />
         ))}
       </div>
-      <div className="setting-row" style={{ marginTop: '12px', marginBottom: 0 }}>
+      <div className="setting-row" style={{ marginTop: '12px', marginBottom: 0, gap: '8px' }}>
         <button
           className="btn btn-primary btn-sm"
           onClick={handleSave}
@@ -207,7 +250,15 @@ export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
         >
           {t('settings.saveSelection')}
         </button>
+        <button
+          className="btn btn-sm"
+          onClick={handleRescan}
+          disabled={rescanning}
+        >
+          {rescanning ? t('settings.rescanning') : t('settings.rescanSelected')}
+        </button>
         {saved && <span className="success-text">{t('settings.saved')}</span>}
+        {rescanResult && <span className="success-text">{rescanResult}</span>}
       </div>
     </div>
   );

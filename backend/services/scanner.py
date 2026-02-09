@@ -32,13 +32,30 @@ def reset_status():
 
 
 def scan_folder(root_folder: str, extensions: set[str], db: Session,
-                excluded_folders: set[str] | None = None):
+                excluded_folders: set[str] | None = None,
+                target_folders: list[str] | None = None):
     reset_status()
     scan_status["is_scanning"] = True
 
     excluded_normalized = {
         os.path.normcase(os.path.normpath(f)) for f in (excluded_folders or set())
     }
+
+    # Normalize target folders for prefix matching
+    target_prefixes: list[str] | None = None
+    if target_folders is not None:
+        target_prefixes = [
+            os.path.normcase(os.path.normpath(f)) for f in target_folders
+        ]
+
+    def _is_in_target(normcase_path: str) -> bool:
+        """Check if a path falls within any of the target folders."""
+        if target_prefixes is None:
+            return True
+        for prefix in target_prefixes:
+            if normcase_path == prefix or normcase_path.startswith(prefix + os.sep):
+                return True
+        return False
 
     try:
         long_root = long_path(root_folder)
@@ -51,23 +68,46 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
         all_db_photos = db.query(Photo.id, Photo.file_path, Photo.modified_at, Photo.file_size).all()
         db_lookup: dict[str, tuple[str, int, int]] = {}
         for pid, fp, mat, fsz in all_db_photos:
-            db_lookup[os.path.normcase(fp)] = (mat, fsz, pid)
+            norm = os.path.normcase(fp)
+            if _is_in_target(norm):
+                db_lookup[norm] = (mat, fsz, pid)
 
         # Collect all image files (use long path prefix for Windows long filename support)
         image_files: list[str] = []
-        for dirpath, dirnames, filenames in os.walk(long_root):
-            # Skip excluded directories
-            dirnames[:] = [
-                d for d in dirnames
-                if os.path.normcase(os.path.normpath(
-                    clean_path(os.path.join(dirpath, d))
-                ))
-                not in excluded_normalized
-            ]
-            for fname in filenames:
-                ext = os.path.splitext(fname)[1].lower().lstrip(".")
-                if ext in extensions:
-                    image_files.append(os.path.join(dirpath, fname))
+
+        if target_prefixes is not None:
+            # Walk only the specified target folders
+            for tf in target_folders:
+                long_tf = long_path(tf)
+                if not os.path.isdir(long_tf):
+                    continue
+                for dirpath, dirnames, filenames in os.walk(long_tf):
+                    dirnames[:] = [
+                        d for d in dirnames
+                        if os.path.normcase(os.path.normpath(
+                            clean_path(os.path.join(dirpath, d))
+                        ))
+                        not in excluded_normalized
+                    ]
+                    for fname in filenames:
+                        ext = os.path.splitext(fname)[1].lower().lstrip(".")
+                        if ext in extensions:
+                            image_files.append(os.path.join(dirpath, fname))
+        else:
+            # Full scan: walk the entire root
+            for dirpath, dirnames, filenames in os.walk(long_root):
+                # Skip excluded directories
+                dirnames[:] = [
+                    d for d in dirnames
+                    if os.path.normcase(os.path.normpath(
+                        clean_path(os.path.join(dirpath, d))
+                    ))
+                    not in excluded_normalized
+                ]
+                for fname in filenames:
+                    ext = os.path.splitext(fname)[1].lower().lstrip(".")
+                    if ext in extensions:
+                        image_files.append(os.path.join(dirpath, fname))
 
         scan_status["total"] = len(image_files)
         logger.info("Scan started: %d files found in %s", len(image_files), root_folder)
@@ -147,9 +187,10 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
         db.commit()
 
         # Remove photos whose files no longer exist on disk
+        # When target_folders is set, only consider photos within those folders
         removed_ids = [
             pid for norm_path, (_, _, pid) in db_lookup.items()
-            if norm_path not in existing_paths
+            if norm_path not in existing_paths and _is_in_target(norm_path)
         ]
         if removed_ids:
             db.query(Photo).filter(Photo.id.in_(removed_ids)).delete(synchronize_session=False)

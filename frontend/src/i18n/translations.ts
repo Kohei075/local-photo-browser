@@ -7,7 +7,7 @@ const translations = {
 
   // Grid
   'grid.photos': { ja: '枚', en: 'photos' },
-  'grid.sortBy': { ja: '並び順', en: 'Sort by' },
+  'grid.sortBy': { ja: 'ソート', en: 'Sort by' },
   'grid.sortCreated': { ja: '作成日', en: 'Created Date' },
   'grid.sortModified': { ja: '更新日', en: 'Modified Date' },
   'grid.sortTaken': { ja: '撮影日', en: 'Taken Date' },
@@ -15,8 +15,8 @@ const translations = {
   'grid.sortRandom': { ja: 'ランダム', en: 'Random' },
   'grid.newestFirst': { ja: '新しい順', en: 'Newest First' },
   'grid.oldestFirst': { ja: '古い順', en: 'Oldest First' },
-  'grid.azOrder': { ja: 'A→Z', en: 'A→Z' },
-  'grid.zaOrder': { ja: 'Z→A', en: 'Z→A' },
+  'grid.azOrder': { ja: '昇順', en: 'A→Z' },
+  'grid.zaOrder': { ja: '降順', en: 'Z→A' },
   'grid.refresh': { ja: '更新', en: 'Refresh' },
   'grid.empty': { ja: '写真がありません。設定画面でフォルダを指定してスキャンを実行してください。', en: 'No photos found. Go to Settings to set your photo folder and run a scan.' },
   'grid.loading': { ja: '写真を読み込み中...', en: 'Loading photos...' },
@@ -37,14 +37,14 @@ const translations = {
   'viewer.exitFullscreen': { ja: '全画面解除', en: 'Exit Fullscreen' },
   'viewer.randomPicks': { ja: '3枚ランダム表示', en: '3 Random Photos' },
   'viewer.backToPhoto': { ja: '写真に戻る', en: 'Back to Photo' },
-  'viewer.backToGallery': { ja: 'ギャラリーに戻る', en: 'Back to Gallery' },
-  'viewer.openInExplorer': { ja: 'ファイルを開く', en: 'Open in Explorer' },
+  'viewer.backToGallery': { ja: '戻る', en: 'Back to Gallery' },
+  'viewer.openInExplorer': { ja: 'エクスプローラーで開く', en: 'Open in Explorer' },
 
   // Settings
   'settings.title': { ja: '設定', en: 'Settings' },
   'settings.photoFolder': { ja: '写真フォルダ', en: 'Photo Folder' },
   'settings.rootFolder': { ja: 'ルートフォルダ:', en: 'Root Folder Path:' },
-  'settings.extensions': { ja: '対象拡張子:', en: 'File Extensions:' },
+  'settings.extensions': { ja: '拡張子:', en: 'File Extensions:' },
   'settings.save': { ja: '保存', en: 'Save Settings' },
   'settings.saved': { ja: '設定を保存しました', en: 'Settings saved successfully' },
   'settings.scan': { ja: 'スキャン', en: 'Scan Photos' },
@@ -67,6 +67,9 @@ const translations = {
   'settings.resettingData': { ja: 'リセット中...', en: 'Resetting...' },
   'settings.resetDone': { ja: 'リセット完了', en: 'Reset complete' },
   'settings.resetConfirm': { ja: 'スキャンデータとサムネイルキャッシュを削除しますか？', en: 'Delete scan data and thumbnail cache?' },
+  'settings.rescanSelected': { ja: '選択したフォルダのみを再スキャン', en: 'Rescan Selected Folders' },
+  'settings.rescanning': { ja: '再スキャン中...', en: 'Rescanning...' },
+  'settings.rescanComplete': { ja: '再スキャン完了: {count}件処理しました', en: 'Rescan complete: {count} files processed' },
 } as const;
 
 type TranslationKey = keyof typeof translations;
