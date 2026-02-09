@@ -11,19 +11,24 @@ export function PhotoGrid() {
   const observerRef = useRef<HTMLDivElement>(null);
   const initialFetchDone = useRef(false);
 
-  const { sortBy, sortOrder, favoriteOnly, selectedFolderPath } = useAppStore();
+  const { sortBy, sortOrder, selectedFolderPath, randomKey, gridColumns } = useAppStore();
   const { t } = useTranslation();
 
   useEffect(() => {
     initialFetchDone.current = false;
-  }, [sortBy, sortOrder, favoriteOnly, selectedFolderPath]);
+  }, [sortBy, sortOrder, selectedFolderPath, randomKey]);
 
   useEffect(() => {
     if (!initialFetchDone.current) {
+      // If photos already exist in the store (e.g. navigating back), skip re-fetch
+      if (photos.length > 0) {
+        initialFetchDone.current = true;
+        return;
+      }
       initialFetchDone.current = true;
       fetchPhotos(1);
     }
-  }, [fetchPhotos, sortBy, sortOrder, favoriteOnly, selectedFolderPath]);
+  }, [fetchPhotos, sortBy, sortOrder, selectedFolderPath, randomKey, photos.length]);
 
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -56,7 +61,7 @@ export function PhotoGrid() {
 
   return (
     <div>
-      <div className="photo-grid">
+      <div className="photo-grid" style={{ '--grid-columns': gridColumns } as React.CSSProperties}>
         {photos.map((photo) => (
           <PhotoCard key={photo.id} photo={photo} />
         ))}

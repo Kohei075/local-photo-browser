@@ -8,6 +8,7 @@ from database import get_db
 from models.photo import Photo
 from models.setting import Setting
 from services.thumbnail import generate_thumbnail
+from services.pathutil import long_path
 
 router = APIRouter()
 
@@ -18,7 +19,8 @@ def get_full_image(photo_id: int, db: Session = Depends(get_db)):
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    if not os.path.isfile(photo.file_path):
+    fpath = long_path(photo.file_path)
+    if not os.path.isfile(fpath):
         raise HTTPException(status_code=404, detail="Image file not found on disk")
 
     media_type_map = {
@@ -34,7 +36,7 @@ def get_full_image(photo_id: int, db: Session = Depends(get_db)):
     media_type = media_type_map.get(photo.extension, "image/jpeg")
 
     return FileResponse(
-        photo.file_path,
+        fpath,
         media_type=media_type,
         headers={"Cache-Control": "max-age=3600"},
     )
@@ -46,14 +48,15 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    if not os.path.isfile(photo.file_path):
+    fpath = long_path(photo.file_path)
+    if not os.path.isfile(fpath):
         raise HTTPException(status_code=404, detail="Image file not found on disk")
 
     # Get thumbnail size setting
     setting = db.query(Setting).filter(Setting.key == "thumbnail_size").first()
     max_size = int(setting.value) if setting else 300
 
-    thumb_path = generate_thumbnail(photo.id, photo.file_path, max_size)
+    thumb_path = generate_thumbnail(photo.id, fpath, max_size)
     if not thumb_path or not os.path.isfile(thumb_path):
         raise HTTPException(status_code=500, detail="Failed to generate thumbnail")
 

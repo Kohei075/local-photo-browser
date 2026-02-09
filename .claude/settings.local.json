@@ -12,7 +12,10 @@
       "Bash(curl:*)",
       "Bash(py -m json.tool:*)",
       "Bash(py -c:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(npx vite build)",
+      "Bash(python -c:*)",
+      "Bash(python:*)"
     ]
   }
 }

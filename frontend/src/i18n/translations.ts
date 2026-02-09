@@ -17,12 +17,9 @@ const translations = {
   'grid.oldestFirst': { ja: '古い順', en: 'Oldest First' },
   'grid.azOrder': { ja: 'A→Z', en: 'A→Z' },
   'grid.zaOrder': { ja: 'Z→A', en: 'Z→A' },
+  'grid.refresh': { ja: '更新', en: 'Refresh' },
   'grid.empty': { ja: '写真がありません。設定画面でフォルダを指定してスキャンを実行してください。', en: 'No photos found. Go to Settings to set your photo folder and run a scan.' },
   'grid.loading': { ja: '写真を読み込み中...', en: 'Loading photos...' },
-
-  // Filter
-  'filter.favoritesOnly': { ja: 'お気に入りのみ', en: 'Favorites only' },
-  'filter.clear': { ja: 'フィルタ解除', en: 'Clear Filters' },
 
   // Sidebar
   'sidebar.folders': { ja: 'フォルダ', en: 'Folders' },
@@ -38,6 +35,9 @@ const translations = {
   'viewer.random': { ja: 'ランダム', en: 'Random' },
   'viewer.fullscreen': { ja: '全画面表示', en: 'Fullscreen' },
   'viewer.exitFullscreen': { ja: '全画面解除', en: 'Exit Fullscreen' },
+  'viewer.randomPicks': { ja: '3枚ランダム表示', en: '3 Random Photos' },
+  'viewer.backToPhoto': { ja: '写真に戻る', en: 'Back to Photo' },
+  'viewer.backToGallery': { ja: 'ギャラリーに戻る', en: 'Back to Gallery' },
 
   // Settings
   'settings.title': { ja: '設定', en: 'Settings' },
@@ -58,11 +58,14 @@ const translations = {
   'settings.folderSelect': { ja: 'スキャン対象フォルダ', en: 'Folders to Scan' },
   'settings.folderSelectDesc': { ja: 'スキャン・ギャラリーに含めるフォルダを選択してください。', en: 'Select folders to include in scan and gallery.' },
   'settings.saveSelection': { ja: '選択を保存', en: 'Save Selection' },
+  'settings.selectAll': { ja: 'すべて選択', en: 'Select All' },
+  'settings.deselectAll': { ja: 'すべて未選択', en: 'Deselect All' },
+  'settings.browse': { ja: '選択', en: 'Browse' },
   'settings.langLabel': { ja: '表示言語:', en: 'Display Language:' },
-  'settings.maintenance': { ja: 'メンテナンス', en: 'Maintenance' },
-  'settings.clearCache': { ja: 'サムネイルキャッシュ削除', en: 'Clear Thumbnail Cache' },
-  'settings.resetDb': { ja: 'データベースリセット', en: 'Reset Database' },
-  'settings.resetConfirm': { ja: 'データベースをリセットしますか？お気に入りが全て削除されます。', en: 'Reset database? All favorites will be lost.' },
+  'settings.resetData': { ja: 'データリセット', en: 'Reset Data' },
+  'settings.resettingData': { ja: 'リセット中...', en: 'Resetting...' },
+  'settings.resetDone': { ja: 'リセット完了', en: 'Reset complete' },
+  'settings.resetConfirm': { ja: 'スキャンデータとサムネイルキャッシュを削除しますか？', en: 'Delete scan data and thumbnail cache?' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

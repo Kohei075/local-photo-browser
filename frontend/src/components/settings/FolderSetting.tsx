@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { api } from '../../api/client';
 import { useTranslation } from '../../i18n/useTranslation';
 
 interface FolderSettingProps {
@@ -12,6 +13,7 @@ export function FolderSetting({ currentFolder, extensions, onSave }: FolderSetti
   const [exts, setExts] = useState(extensions);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [picking, setPicking] = useState(false);
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -31,6 +33,18 @@ export function FolderSetting({ currentFolder, extensions, onSave }: FolderSetti
     }
   };
 
+  const handleBrowse = async () => {
+    setPicking(true);
+    try {
+      const res = await api.post<{ path: string }>('/settings/pick-folder');
+      if (res.path) {
+        setFolder(res.path);
+        setError('');
+      }
+    } catch { /* dialog cancelled or error */ }
+    setPicking(false);
+  };
+
   return (
     <div className="setting-section">
       <h3>{t('settings.photoFolder')}</h3>
@@ -41,8 +55,11 @@ export function FolderSetting({ currentFolder, extensions, onSave }: FolderSetti
           value={folder}
           onChange={(e) => { setFolder(e.target.value); setError(''); }}
           placeholder="e.g., C:\Users\Photos"
-          className="setting-input"
+          className="setting-input setting-input-path"
         />
+        <button className="btn btn-sm" onClick={handleBrowse} disabled={picking}>
+          {t('settings.browse')}
+        </button>
       </div>
       <div className="setting-row">
         <label>{t('settings.extensions')}</label>
@@ -51,7 +68,7 @@ export function FolderSetting({ currentFolder, extensions, onSave }: FolderSetti
           value={exts}
           onChange={(e) => setExts(e.target.value)}
           placeholder="jpg,jpeg,png,webp"
-          className="setting-input"
+          className="setting-input setting-input-ext"
         />
       </div>
       <button className="btn btn-primary" onClick={handleSave}>

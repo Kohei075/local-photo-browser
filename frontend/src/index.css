@@ -372,22 +372,28 @@ input:focus, select:focus {
 .grid-page {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+}
+
+.grid-toolbar-sticky {
+  position: sticky;
+  top: -20px;
+  z-index: 50;
+  background: var(--bg);
+  padding: 20px 0 8px;
+  margin: -20px 0 0;
 }
 
 .grid-toolbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 /* === Sort Bar === */
 .sort-bar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  display: contents;
 }
 
 .sort-bar-count {
@@ -410,32 +416,29 @@ input:focus, select:focus {
   padding: 4px 8px;
 }
 
+.sort-refresh-btn {
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 3px 8px;
+}
+
+.grid-size-slider {
+  width: 80px;
+  height: 4px;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
 /* === Filter Bar === */
 .filter-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.filter-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-}
-
-.filter-checkbox input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--primary);
+  display: contents;
 }
 
 /* === Photo Grid === */
 .photo-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(var(--grid-columns, 4), 1fr);
+  gap: 12px;
 }
 
 .photo-card {
@@ -454,25 +457,19 @@ input:focus, select:focus {
 
 .photo-card-image {
   position: relative;
-  aspect-ratio: 1;
+  aspect-ratio: 4 / 3;
   overflow: hidden;
-  background: var(--bg);
+  background: #000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .photo-card-image img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
-}
-
-.photo-card-favorite {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  color: var(--primary);
-  font-size: 1.2rem;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.5);
 }
 
 .photo-card-info {
@@ -500,25 +497,40 @@ input:focus, select:focus {
 .viewer-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - var(--header-height) - 40px);
+  height: calc(100vh - var(--header-height) - 20px);
 }
 
 .viewer-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 0;
+  padding: 4px 0;
   gap: 12px;
 }
 
 .viewer-filename {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: var(--text-muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
   text-align: center;
+}
+
+.breadcrumb-sep {
+  margin: 0 2px;
+  color: var(--border);
+}
+
+.breadcrumb-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  cursor: pointer;
+}
+.breadcrumb-link:hover {
+  color: var(--accent);
+  text-decoration: underline;
 }
 
 .viewer-top-actions {
@@ -609,7 +621,7 @@ input:focus, select:focus {
   align-items: center;
   justify-content: center;
   gap: 16px;
-  padding: 8px 0;
+  padding: 4px 0;
 }
 
 .nav-btn {
@@ -638,19 +650,124 @@ input:focus, select:focus {
   font-size: 1.2rem;
 }
 
-/* === Favorite Button === */
-.favorite-btn {
-  font-size: 1.5rem;
+/* === Random Picks === */
+.random-picks-actions {
+  display: flex;
+  justify-content: center;
+  padding: 2px 0;
+}
+
+.random-picks-panel {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 4px 8px;
-  transition: color 0.2s;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
 }
 
-.favorite-btn.active {
-  color: var(--primary);
+.random-picks-header {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
 }
 
-.favorite-btn:hover {
-  color: var(--primary-hover);
+.random-picks-fullscreen-btn,
+.random-picks-close {
+  padding: 2px 8px;
+  font-size: 1.1rem;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.random-picks-fullscreen-btn:hover,
+.random-picks-close:hover {
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.random-picks-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+}
+
+.random-picks-item {
+  cursor: pointer;
+  border-radius: var(--radius);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  transition: transform 0.2s, border-color 0.2s;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.random-picks-item:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.random-picks-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+  background: #000;
+}
+
+.random-picks-name {
+  display: block;
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Fullscreen mode */
+.random-picks-panel:fullscreen {
+  background: #000;
+  padding: 8px;
+  min-height: unset;
+}
+
+.random-picks-panel:fullscreen .random-picks-header {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+}
+
+.random-picks-panel:fullscreen .random-picks-fullscreen-btn,
+.random-picks-panel:fullscreen .random-picks-close {
+  color: rgba(255,255,255,0.7);
+}
+
+.random-picks-panel:fullscreen .random-picks-fullscreen-btn:hover,
+.random-picks-panel:fullscreen .random-picks-close:hover {
+  background: rgba(255,255,255,0.2);
+  color: #fff;
+}
+
+.random-picks-panel:fullscreen .random-picks-grid {
+  height: 100%;
+}
+
+.random-picks-panel:fullscreen .random-picks-item {
+  border-color: transparent;
+}
+
+.random-picks-panel:fullscreen .random-picks-name {
+  color: rgba(255,255,255,0.7);
 }
 
 /* === Viewer Bottom Bar === */
@@ -658,7 +775,7 @@ input:focus, select:focus {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  padding: 8px 0;
+  padding: 4px 0;
   gap: 16px;
 }
 
@@ -703,8 +820,17 @@ input:focus, select:focus {
 }
 
 .setting-input {
+  padding: 6px 10px;
+  font-size: 0.9rem;
+}
+
+.setting-input-path {
   flex: 1;
-  padding: 8px 12px;
+  max-width: 400px;
+}
+
+.setting-input-ext {
+  width: 240px;
 }
 
 .setting-input-sm {
@@ -717,6 +843,12 @@ input:focus, select:focus {
 }
 
 /* === Folder Select Tree === */
+.folder-select-actions {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
 .folder-select-tree {
   max-height: 400px;
   overflow-y: auto;
@@ -886,7 +1018,7 @@ input:focus, select:focus {
 /* === Responsive === */
 @media (max-width: 768px) {
   .photo-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, 1fr) !important;
     gap: 8px;
   }
 

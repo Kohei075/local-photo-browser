@@ -1,4 +1,5 @@
 import math
+import os
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
@@ -34,7 +35,9 @@ def build_query(db: Session, favorite_only: bool = False, folder_path: Optional[
     if favorite_only:
         query = query.filter(Photo.is_favorite == 1)
     if folder_path is not None:
-        prefix = folder_path.rstrip("/\\")
+        prefix = os.path.normpath(folder_path)
+        if not prefix.endswith(os.sep):
+            prefix += os.sep
         query = query.filter(Photo.file_path.like(prefix + "%"))
     return query
 

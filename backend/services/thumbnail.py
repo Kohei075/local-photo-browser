@@ -3,6 +3,7 @@ import logging
 from PIL import Image
 
 from config import THUMBNAIL_DIR
+from services.pathutil import long_path
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ def generate_thumbnail(photo_id: int, file_path: str, max_size: int = 300) -> st
         return thumb_path
 
     try:
-        with Image.open(file_path) as img:
+        with Image.open(long_path(file_path)) as img:
             # Handle animated images (GIF) - use first frame
             if hasattr(img, "n_frames") and img.n_frames > 1:
                 img.seek(0)

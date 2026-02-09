@@ -166,12 +166,27 @@ export function FolderSelectTree({ rootFolder }: FolderSelectTreeProps) {
   }
   if (folders.length === 0) return null;
 
+  const selectAll = () => {
+    setExcluded(new Set());
+    setSaved(false);
+  };
+
+  const deselectAll = () => {
+    const allPaths = folders.flatMap(getAllPaths);
+    setExcluded(new Set(allPaths));
+    setSaved(false);
+  };
+
   return (
     <div className="setting-section">
       <h3>{t('settings.folderSelect')}</h3>
       <p className="scan-info-text" style={{ marginBottom: '8px' }}>
         {t('settings.folderSelectDesc')}
       </p>
+      <div className="folder-select-actions">
+        <button className="btn btn-sm" onClick={selectAll}>{t('settings.selectAll')}</button>
+        <button className="btn btn-sm" onClick={deselectAll}>{t('settings.deselectAll')}</button>
+      </div>
       <div className="folder-select-tree">
         {folders.map((node) => (
           <FolderCheckItem

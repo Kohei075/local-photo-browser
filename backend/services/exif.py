@@ -3,6 +3,8 @@ from PIL import Image
 from typing import Optional
 from datetime import datetime
 
+from services.pathutil import long_path
+
 logger = logging.getLogger(__name__)
 
 
@@ -17,7 +19,7 @@ def extract_image_info(file_path: str) -> tuple[Optional[int], Optional[int], Op
     taken_at: Optional[str] = None
 
     try:
-        with Image.open(file_path) as img:
+        with Image.open(long_path(file_path)) as img:
             try:
                 width, height = img.size
             except Exception as e:

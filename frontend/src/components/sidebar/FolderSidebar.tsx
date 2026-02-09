@@ -94,8 +94,6 @@ export function FolderSidebar() {
       setSearchResults([]);
     } else if (result.photo_id) {
       navigate(`/viewer/${result.photo_id}`);
-      setSearchQuery('');
-      setSearchResults([]);
     }
   };
 

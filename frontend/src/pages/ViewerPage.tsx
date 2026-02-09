@@ -1,24 +1,32 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
 import { useAppStore } from '../stores/appStore';
-import { useFavorite } from '../hooks/useFavorite';
-import { useKeyboardNav } from '../hooks/useKeyboardNav';
 import { PhotoViewer } from '../components/viewer/PhotoViewer';
+import type { PhotoViewerHandle } from '../components/viewer/PhotoViewer';
 import { NavigationControls } from '../components/viewer/NavigationControls';
-import { FavoriteButton } from '../components/viewer/FavoriteButton';
+import { RandomPicksPanel } from '../components/viewer/RandomPicksPanel';
+import type { RandomPicksPanelHandle } from '../components/viewer/RandomPicksPanel';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
-import type { Photo, NeighborsResponse } from '../types';
+import { useTranslation } from '../i18n/useTranslation';
+import type { Photo, NeighborsResponse, PhotoListResponse } from '../types';
 
 export function ViewerPage() {
   const { photoId } = useParams<{ photoId: string }>();
   const navigate = useNavigate();
-  const { sortBy, sortOrder, favoriteOnly, selectedFolderPath } = useAppStore();
-  const { toggleFavorite } = useFavorite();
+  const location = useLocation();
+  const { sortBy, sortOrder, selectedFolderPath, folderRoot, setSelectedFolderPath } = useAppStore();
+  const { t } = useTranslation();
 
   const [photo, setPhoto] = useState<Photo | null>(null);
   const [neighbors, setNeighbors] = useState<NeighborsResponse>({ prev_id: null, next_id: null });
   const [loading, setLoading] = useState(true);
+  const [randomPicks, setRandomPicks] = useState<Photo[]>([]);
+  const [showRandomPicks, setShowRandomPicks] = useState(false);
+
+  const handleRandomPicksRef = useRef<() => Promise<void>>(undefined);
+  const photoViewerRef = useRef<PhotoViewerHandle>(null);
+  const randomPicksRef = useRef<RandomPicksPanelHandle>(null);
 
   const fetchPhoto = useCallback(async (id: string) => {
     setLoading(true);
@@ -26,7 +34,6 @@ export function ViewerPage() {
       const neighborParams = new URLSearchParams({
         sort_by: sortBy,
         sort_order: sortOrder,
-        favorite_only: String(favoriteOnly),
       });
       if (selectedFolderPath !== null) neighborParams.set('folder_path', selectedFolderPath);
       const [photoData, neighborsData] = await Promise.all([
@@ -40,64 +47,165 @@ export function ViewerPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, favoriteOnly, selectedFolderPath, navigate]);
+  }, [sortBy, sortOrder, selectedFolderPath, navigate]);
 
+  // Fetch photo data
   useEffect(() => {
     if (photoId) fetchPhoto(photoId);
   }, [photoId, fetchPhoto]);
+
+  // Consume location.state randomPicks from gallery
+  useEffect(() => {
+    const state = location.state as { randomPicks?: Photo[] } | null;
+    if (state?.randomPicks && state.randomPicks.length > 0) {
+      setRandomPicks(state.randomPicks);
+      setShowRandomPicks(true);
+      window.history.replaceState({}, '');
+    } else {
+      setShowRandomPicks(false);
+      setRandomPicks([]);
+    }
+  }, [location.key]);
 
   const goTo = useCallback((id: number | null) => {
     if (id !== null) navigate(`/viewer/${id}`);
   }, [navigate]);
 
   const handleRandom = useCallback(async () => {
-    const params = new URLSearchParams({
-      favorite_only: String(favoriteOnly),
-    });
+    const params = new URLSearchParams();
     if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
     try {
       const randomPhoto = await api.get<Photo>(`/photos/random?${params}`);
       navigate(`/viewer/${randomPhoto.id}`);
     } catch { /* no photos */ }
-  }, [favoriteOnly, selectedFolderPath, navigate]);
+  }, [selectedFolderPath, navigate]);
 
-  const handleToggleFavorite = useCallback(async () => {
-    if (photo) {
-      const updated = await toggleFavorite(photo);
-      setPhoto(updated);
-    }
-  }, [photo, toggleFavorite]);
+  const handleRandomPicks = useCallback(async () => {
+    if (!photo) return;
+    const params = new URLSearchParams({
+      sort_by: 'random',
+      per_page: '4',
+    });
+    if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
+    try {
+      const res = await api.get<PhotoListResponse>(`/photos?${params}`);
+      const picks = res.items.filter((p) => p.id !== photo.id).slice(0, 3);
+      setRandomPicks(picks);
+      setShowRandomPicks(true);
+    } catch { /* ignore */ }
+  }, [photo, selectedFolderPath]);
 
-  useKeyboardNav({
-    onPrev: () => goTo(neighbors.prev_id),
-    onNext: () => goTo(neighbors.next_id),
-    onToggleFavorite: handleToggleFavorite,
-    onEscape: () => navigate('/'),
-  });
+  handleRandomPicksRef.current = handleRandomPicks;
 
-  if (loading || !photo) return <LoadingSpinner message="Loading photo..." />;
+  // Keyboard navigation
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+
+      switch (e.key) {
+        case 'ArrowLeft':
+          e.preventDefault();
+          if (showRandomPicks) {
+            handleRandomPicksRef.current?.();
+          } else {
+            goTo(neighbors.prev_id);
+          }
+          break;
+        case 'ArrowRight':
+          e.preventDefault();
+          if (showRandomPicks) {
+            handleRandomPicksRef.current?.();
+          } else {
+            goTo(neighbors.next_id);
+          }
+          break;
+        case ' ':
+          e.preventDefault();
+          if (showRandomPicks) {
+            randomPicksRef.current?.toggleFullscreen();
+          } else {
+            photoViewerRef.current?.toggleFullscreen();
+          }
+          break;
+        case 'Escape':
+          navigate('/');
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [showRandomPicks, neighbors, goTo, navigate]);
+
+  if (!photo) return <LoadingSpinner message="Loading photo..." />;
 
   return (
     <div className="viewer-page">
       <div className="viewer-top-bar">
         <button className="btn" onClick={() => navigate('/')}>
-          &#8592; Gallery
+          &#8592; {t('viewer.backToGallery')}
         </button>
-        <span className="viewer-filename">{photo.file_name}</span>
-        <div className="viewer-top-actions">
-          <FavoriteButton photo={photo} onToggle={handleToggleFavorite} />
-        </div>
+        {!showRandomPicks && (
+          <span className="viewer-filename" title={photo.file_path}>
+            {(() => {
+              const sep = photo.file_path.includes('/') ? '/' : '\\';
+              const dir = photo.file_path.substring(0, photo.file_path.lastIndexOf(sep));
+              const dirSegments = dir.split(/[\\/]/);
+              const root = folderRoot ? folderRoot.replace(/[\\/]+$/, '') : '';
+              const rootSegments = root ? root.split(/[\\/]/) : [];
+              const startIdx = root && dir.startsWith(root) ? rootSegments.length : 0;
+              const displayParts = dirSegments.slice(startIdx);
+              return displayParts.map((part, i) => {
+                const absPath = dirSegments.slice(0, startIdx + i + 1).join(sep);
+                return (
+                  <span key={i}>
+                    {i > 0 && <span className="breadcrumb-sep">/</span>}
+                    <a
+                      className="breadcrumb-link"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedFolderPath(absPath);
+                        navigate('/');
+                      }}
+                    >
+                      {part}
+                    </a>
+                  </span>
+                );
+              });
+            })()}
+          </span>
+        )}
       </div>
 
-      <PhotoViewer photo={photo} />
+      {showRandomPicks ? (
+        <RandomPicksPanel
+          ref={randomPicksRef}
+          photos={randomPicks}
+          onSelect={(id) => navigate(`/viewer/${id}`)}
+          onClose={() => setShowRandomPicks(false)}
+          onShuffle={handleRandomPicks}
+        />
+      ) : (
+        <>
+          <PhotoViewer ref={photoViewerRef} photo={photo} />
 
-      <NavigationControls
-        onPrev={() => goTo(neighbors.prev_id)}
-        onNext={() => goTo(neighbors.next_id)}
-        onRandom={handleRandom}
-        hasPrev={neighbors.prev_id !== null}
-        hasNext={neighbors.next_id !== null}
-      />
+          <NavigationControls
+            onPrev={() => goTo(neighbors.prev_id)}
+            onNext={() => goTo(neighbors.next_id)}
+            onRandom={handleRandom}
+            hasPrev={neighbors.prev_id !== null}
+            hasNext={neighbors.next_id !== null}
+          />
+        </>
+      )}
+
+      <div className="random-picks-actions">
+        <button className="btn btn-sm" onClick={handleRandomPicks}>
+          {t('viewer.randomPicks')}
+        </button>
+      </div>
 
       <div className="viewer-bottom-bar">
         <div className="viewer-info">

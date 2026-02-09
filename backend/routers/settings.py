@@ -65,14 +65,42 @@ def clear_cache():
 
 
 @router.post("/settings/reset-db")
-def reset_db():
+def reset_db(db: Session = Depends(get_db)):
+    """Delete all photo records and thumbnail cache, preserving settings."""
     if os.path.isdir(THUMBNAIL_DIR):
         shutil.rmtree(THUMBNAIL_DIR)
         os.makedirs(THUMBNAIL_DIR, exist_ok=True)
 
-    Base.metadata.drop_all(bind=engine)
-    init_db()
+    db.query(Photo).delete()
+    db.commit()
     return {"message": "Database reset complete"}
+
+
+@router.post("/settings/pick-folder")
+def pick_folder():
+    """Open native OS folder picker dialog and return selected path."""
+    import threading
+
+    result: dict = {"path": ""}
+
+    def _open_dialog():
+        import tkinter as tk
+        from tkinter import filedialog
+
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True)
+        folder = filedialog.askdirectory(title="Select Folder")
+        root.destroy()
+        if folder:
+            result["path"] = os.path.normpath(folder)
+
+    # tkinter must run on a dedicated thread (not asyncio event loop)
+    t = threading.Thread(target=_open_dialog)
+    t.start()
+    t.join(timeout=120)
+
+    return result
 
 
 @router.get("/settings/excluded-folders", response_model=ExcludedFoldersResponse)

@@ -3,14 +3,12 @@ import { useEffect } from 'react';
 interface KeyboardNavOptions {
   onPrev?: () => void;
   onNext?: () => void;
-  onToggleFavorite?: () => void;
   onEscape?: () => void;
 }
 
 export function useKeyboardNav(options: KeyboardNavOptions) {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      // Don't handle if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) {
         return;
       }
@@ -23,11 +21,6 @@ export function useKeyboardNav(options: KeyboardNavOptions) {
         case 'ArrowRight':
           e.preventDefault();
           options.onNext?.();
-          break;
-        case 'f':
-        case 'F':
-          e.preventDefault();
-          options.onToggleFavorite?.();
           break;
         case 'Escape':
           options.onEscape?.();

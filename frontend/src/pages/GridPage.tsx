@@ -5,9 +5,11 @@ import { FilterBar } from '../components/grid/FilterBar';
 export function GridPage() {
   return (
     <div className="grid-page">
-      <div className="grid-toolbar">
-        <FilterBar />
-        <SortBar />
+      <div className="grid-toolbar-sticky">
+        <div className="grid-toolbar">
+          <FilterBar />
+          <SortBar />
+        </div>
       </div>
       <PhotoGrid />
     </div>

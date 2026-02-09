@@ -8,12 +8,15 @@ interface ScanButtonProps {
   rootFolder: string;
   onStartScan: () => Promise<void>;
   onPollStatus: () => Promise<{ is_scanning: boolean }>;
+  onReset: () => Promise<void>;
 }
 
-export function ScanButton({ rootFolder, onStartScan, onPollStatus }: ScanButtonProps) {
+export function ScanButton({ rootFolder, onStartScan, onPollStatus, onReset }: ScanButtonProps) {
   const { scanStatus } = useAppStore();
   const [scanning, setScanning] = useState(false);
   const [photoCount, setPhotoCount] = useState<number | null>(null);
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState(false);
   const pollRef = useRef<number | null>(null);
   const { t } = useTranslation();
 
@@ -33,6 +36,19 @@ export function ScanButton({ rootFolder, onStartScan, onPollStatus }: ScanButton
   const handleScan = async () => {
     await onStartScan();
     setScanning(true);
+  };
+
+  const handleReset = async () => {
+    if (!confirm(t('settings.resetConfirm'))) return;
+    setResetting(true);
+    setResetDone(false);
+    try {
+      await onReset();
+      setPhotoCount(0);
+      setResetDone(true);
+      setTimeout(() => setResetDone(false), 3000);
+    } catch { /* ignore */ }
+    setResetting(false);
   };
 
   useEffect(() => {
@@ -68,13 +84,23 @@ export function ScanButton({ rootFolder, onStartScan, onPollStatus }: ScanButton
         )}
       </div>
 
-      <button
-        className="btn btn-primary"
-        onClick={handleScan}
-        disabled={!!isScanning}
-      >
-        {isScanning ? t('settings.scanning') : t('settings.startScan')}
-      </button>
+      <div className="setting-row" style={{ marginBottom: 0 }}>
+        <button
+          className="btn btn-primary"
+          onClick={handleScan}
+          disabled={!!isScanning || resetting}
+        >
+          {isScanning ? t('settings.scanning') : t('settings.startScan')}
+        </button>
+        <button
+          className="btn btn-danger"
+          onClick={handleReset}
+          disabled={!!isScanning || resetting}
+        >
+          {resetting ? t('settings.resettingData') : t('settings.resetData')}
+        </button>
+        {resetDone && <span className="success-text">{t('settings.resetDone')}</span>}
+      </div>
 
       {isScanning && scanStatus && (
         <div className="scan-progress">

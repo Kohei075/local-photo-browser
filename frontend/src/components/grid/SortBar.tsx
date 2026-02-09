@@ -3,13 +3,12 @@ import { useTranslation } from '../../i18n/useTranslation';
 import type { SortBy, SortOrder } from '../../types';
 
 export function SortBar() {
-  const { sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos } = useAppStore();
+  const { sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos, refreshRandom, gridColumns, setGridColumns } = useAppStore();
   const { t } = useTranslation();
 
   const sortOptions: { value: SortBy; label: string }[] = [
     { value: 'created_at', label: t('grid.sortCreated') },
     { value: 'modified_at', label: t('grid.sortModified') },
-    { value: 'taken_at', label: t('grid.sortTaken') },
     { value: 'file_name', label: t('grid.sortFileName') },
     { value: 'random', label: t('grid.sortRandom') },
   ];
@@ -31,7 +30,15 @@ export function SortBar() {
             <option key={opt.value} value={opt.value}>{opt.label}</option>
           ))}
         </select>
-        {sortBy !== 'random' && (
+        {sortBy === 'random' ? (
+          <button
+            className="btn btn-sm sort-refresh-btn"
+            onClick={refreshRandom}
+            title={t('grid.refresh')}
+          >
+            &#8635;
+          </button>
+        ) : (
           <select
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as SortOrder)}
@@ -41,6 +48,14 @@ export function SortBar() {
           </select>
         )}
       </div>
+      <input
+        type="range"
+        className="grid-size-slider"
+        min={2}
+        max={8}
+        value={10 - gridColumns}
+        onChange={(e) => setGridColumns(10 - Number(e.target.value))}
+      />
     </div>
   );
 }

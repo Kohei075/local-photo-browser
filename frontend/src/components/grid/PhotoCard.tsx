@@ -14,9 +14,6 @@ export function PhotoCard({ photo }: PhotoCardProps) {
           alt={photo.file_name}
           loading="lazy"
         />
-        {photo.is_favorite && (
-          <span className="photo-card-favorite" title="Favorite">&#9829;</span>
-        )}
       </div>
       <div className="photo-card-info">
         <span className="photo-card-name" title={photo.file_name}>{photo.file_name}</span>

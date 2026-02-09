@@ -8,7 +8,7 @@ import { useTranslation } from '../i18n/useTranslation';
 
 export function SettingsPage() {
   const {
-    settings, loading, updateSettings, startScan, pollScanStatus, clearCache, resetDb,
+    settings, loading, updateSettings, startScan, pollScanStatus, resetAll,
   } = useSettings();
   const { t } = useTranslation();
 
@@ -30,23 +30,11 @@ export function SettingsPage() {
         rootFolder={settings.root_folder}
         onStartScan={startScan}
         onPollStatus={pollScanStatus}
+        onReset={resetAll}
       />
 
       <div className="setting-section">
-        <h3>{t('settings.maintenance')}</h3>
         <LanguageSetting />
-        <div className="setting-row setting-actions">
-          <button className="btn" onClick={clearCache}>
-            {t('settings.clearCache')}
-          </button>
-          <button className="btn btn-danger" onClick={() => {
-            if (confirm(t('settings.resetConfirm'))) {
-              resetDb();
-            }
-          }}>
-            {t('settings.resetDb')}
-          </button>
-        </div>
       </div>
     </div>
   );

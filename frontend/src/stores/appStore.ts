@@ -13,7 +13,8 @@ interface AppState {
   // Sort / Filter
   sortBy: SortBy;
   sortOrder: SortOrder;
-  favoriteOnly: boolean;
+  randomKey: number;
+  gridColumns: number;
 
   // Viewer
   currentPhotoId: number | null;
@@ -33,10 +34,11 @@ interface AppState {
   setLoadingPhotos: (loading: boolean) => void;
   setSortBy: (sortBy: SortBy) => void;
   setSortOrder: (sortOrder: SortOrder) => void;
-  setFavoriteOnly: (favoriteOnly: boolean) => void;
   setCurrentPhotoId: (id: number | null) => void;
   setScanStatus: (status: ScanStatus | null) => void;
   updatePhoto: (photo: Photo) => void;
+  setGridColumns: (columns: number) => void;
+  refreshRandom: () => void;
   resetFilters: () => void;
   setFolderTree: (root: string, folders: FolderNode[]) => void;
   setSelectedFolderPath: (path: string | null) => void;
@@ -51,9 +53,10 @@ export const useAppStore = create<AppState>((set) => ({
   totalPages: 0,
   isLoadingPhotos: false,
 
-  sortBy: 'created_at',
+  sortBy: 'modified_at',
   sortOrder: 'desc',
-  favoriteOnly: false,
+  randomKey: 0,
+  gridColumns: Number(localStorage.getItem('grid_columns')) || 4,
 
   currentPhotoId: null,
 
@@ -74,16 +77,17 @@ export const useAppStore = create<AppState>((set) => ({
       totalPages,
     })),
   setLoadingPhotos: (isLoadingPhotos) => set({ isLoadingPhotos }),
-  setSortBy: (sortBy) => set({ sortBy, photos: [], page: 1 }),
+  setSortBy: (sortBy) => set({ sortBy, sortOrder: sortBy === 'file_name' ? 'asc' : 'desc', photos: [], page: 1 }),
   setSortOrder: (sortOrder) => set({ sortOrder, photos: [], page: 1 }),
-  setFavoriteOnly: (favoriteOnly) => set({ favoriteOnly, photos: [], page: 1 }),
   setCurrentPhotoId: (currentPhotoId) => set({ currentPhotoId }),
   setScanStatus: (scanStatus) => set({ scanStatus }),
   updatePhoto: (photo) =>
     set((state) => ({
       photos: state.photos.map((p) => (p.id === photo.id ? photo : p)),
     })),
-  resetFilters: () => set({ favoriteOnly: false, selectedFolderPath: null, photos: [], page: 1 }),
+  setGridColumns: (gridColumns) => { localStorage.setItem('grid_columns', String(gridColumns)); set({ gridColumns }); },
+  refreshRandom: () => set((state) => ({ randomKey: state.randomKey + 1, photos: [], page: 1 })),
+  resetFilters: () => set({ selectedFolderPath: null, photos: [], page: 1 }),
   setFolderTree: (folderRoot, folderTree) => set({ folderRoot, folderTree }),
   setSelectedFolderPath: (selectedFolderPath) => set({ selectedFolderPath, photos: [], page: 1 }),
   setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),

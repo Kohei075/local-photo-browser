@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState, useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import type { Photo } from '../../types';
 import { ZoomControls } from './ZoomControls';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -7,7 +7,11 @@ interface PhotoViewerProps {
   photo: Photo;
 }
 
-export function PhotoViewer({ photo }: PhotoViewerProps) {
+export interface PhotoViewerHandle {
+  toggleFullscreen: () => void;
+}
+
+export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(function PhotoViewer({ photo }, ref) {
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -72,6 +76,8 @@ export function PhotoViewer({ photo }: PhotoViewerProps) {
     }
   }, []);
 
+  useImperativeHandle(ref, () => ({ toggleFullscreen }), [toggleFullscreen]);
+
   useEffect(() => {
     const handler = () => {
       setIsFullscreen(!!document.fullscreenElement);
@@ -123,4 +129,4 @@ export function PhotoViewer({ photo }: PhotoViewerProps) {
       />
     </div>
   );
-}
+});

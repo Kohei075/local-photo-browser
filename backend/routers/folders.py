@@ -68,13 +68,13 @@ def get_folders(db: Session = Depends(get_db)):
 
 
 @router.get("/folders/browse")
-def browse_folders(path: str = Query("")):
+def browse_folders(path: str = Query(""), max_depth: int = Query(10, ge=1, le=20)):
     """Browse filesystem folders under a given root path."""
     if not path or not os.path.isdir(path):
         return {"folders": []}
 
     def build_tree(root: str, depth: int = 0) -> list[dict]:
-        if depth > 10:
+        if depth >= max_depth:
             return []
         result = []
         try:

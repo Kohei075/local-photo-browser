@@ -34,11 +34,7 @@ export function useSettings() {
     return status;
   }, [setScanStatus]);
 
-  const clearCache = useCallback(async () => {
-    await api.post('/settings/clear-cache');
-  }, []);
-
-  const resetDb = useCallback(async () => {
+  const resetAll = useCallback(async () => {
     await api.post('/settings/reset-db');
   }, []);
 
@@ -46,5 +42,5 @@ export function useSettings() {
     fetchSettings();
   }, [fetchSettings]);
 
-  return { settings, loading, fetchSettings, updateSettings, startScan, pollScanStatus, clearCache, resetDb };
+  return { settings, loading, fetchSettings, updateSettings, startScan, pollScanStatus, resetAll };
 }
