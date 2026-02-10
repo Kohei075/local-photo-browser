@@ -31,17 +31,26 @@ export function ViewerPage() {
   const fetchPhoto = useCallback(async (id: string) => {
     setLoading(true);
     try {
-      const neighborParams = new URLSearchParams({
-        sort_by: sortBy,
-        sort_order: sortOrder,
-      });
-      if (selectedFolderPath !== null) neighborParams.set('folder_path', selectedFolderPath);
-      const [photoData, neighborsData] = await Promise.all([
-        api.get<Photo>(`/photos/${id}`),
-        api.get<NeighborsResponse>(`/photos/${id}/neighbors?${neighborParams}`),
-      ]);
+      const photoData = await api.get<Photo>(`/photos/${id}`);
       setPhoto(photoData);
-      setNeighbors(neighborsData);
+
+      if (sortBy === 'random') {
+        // In random mode, compute neighbors from the gallery's loaded photo list
+        const list = useAppStore.getState().photos;
+        const idx = list.findIndex(p => p.id === Number(id));
+        setNeighbors({
+          prev_id: idx > 0 ? list[idx - 1].id : null,
+          next_id: idx >= 0 && idx < list.length - 1 ? list[idx + 1].id : null,
+        });
+      } else {
+        const neighborParams = new URLSearchParams({
+          sort_by: sortBy,
+          sort_order: sortOrder,
+        });
+        if (selectedFolderPath !== null) neighborParams.set('folder_path', selectedFolderPath);
+        const neighborsData = await api.get<NeighborsResponse>(`/photos/${id}/neighbors?${neighborParams}`);
+        setNeighbors(neighborsData);
+      }
     } catch {
       navigate('/');
     } finally {

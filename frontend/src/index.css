@@ -249,23 +249,42 @@ input:focus, select:focus {
 }
 
 .folder-tree-toggle {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.7rem;
+  font-size: 0.85rem;
   flex-shrink: 0;
-  border-radius: 2px;
+  border-radius: 3px;
   color: var(--text-muted);
 }
 
 .folder-tree-toggle:hover {
-  background: rgba(0,0,0,0.08);
+  background: rgba(0,0,0,0.10);
+  color: var(--text);
+}
+
+.folder-tree-toggle:focus-visible {
+  outline: 2px solid var(--text-muted);
+  outline-offset: -1px;
+}
+
+.folder-tree-item.selected .folder-tree-toggle {
+  color: rgba(255,255,255,0.85);
+}
+
+.folder-tree-item.selected .folder-tree-toggle:hover {
+  background: rgba(255,255,255,0.18);
+  color: white;
+}
+
+.folder-tree-item.selected .folder-tree-toggle:focus-visible {
+  outline-color: rgba(255,255,255,0.7);
 }
 
 .folder-tree-spacer {
-  width: 16px;
+  width: 20px;
   flex-shrink: 0;
 }
 
