@@ -75,13 +75,12 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
         # Collect all image files (use long path prefix for Windows long filename support)
         image_files: list[str] = []
 
-        if target_prefixes is not None:
-            # Walk only the specified target folders
-            for tf in target_folders:
-                long_tf = long_path(tf)
-                if not os.path.isdir(long_tf):
-                    continue
-                for dirpath, dirnames, filenames in os.walk(long_tf):
+        def _walk_error(err: OSError):
+            logger.warning("Cannot access directory: %s", err)
+
+        def _filter_and_collect(walker):
+            for dirpath, dirnames, filenames in walker:
+                try:
                     dirnames[:] = [
                         d for d in dirnames
                         if os.path.normcase(os.path.normpath(
@@ -89,25 +88,23 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
                         ))
                         not in excluded_normalized
                     ]
-                    for fname in filenames:
-                        ext = os.path.splitext(fname)[1].lower().lstrip(".")
-                        if ext in extensions:
-                            image_files.append(os.path.join(dirpath, fname))
-        else:
-            # Full scan: walk the entire root
-            for dirpath, dirnames, filenames in os.walk(long_root):
-                # Skip excluded directories
-                dirnames[:] = [
-                    d for d in dirnames
-                    if os.path.normcase(os.path.normpath(
-                        clean_path(os.path.join(dirpath, d))
-                    ))
-                    not in excluded_normalized
-                ]
+                except Exception as e:
+                    logger.warning("Error filtering dirs in %s: %s", dirpath, e)
                 for fname in filenames:
                     ext = os.path.splitext(fname)[1].lower().lstrip(".")
                     if ext in extensions:
                         image_files.append(os.path.join(dirpath, fname))
+
+        if target_prefixes is not None:
+            # Walk only the specified target folders
+            for tf in target_folders:
+                long_tf = long_path(tf)
+                if not os.path.isdir(long_tf):
+                    continue
+                _filter_and_collect(os.walk(long_tf, onerror=_walk_error))
+        else:
+            # Full scan: walk the entire root
+            _filter_and_collect(os.walk(long_root, onerror=_walk_error))
 
         scan_status["total"] = len(image_files)
         logger.info("Scan started: %d files found in %s", len(image_files), root_folder)
@@ -177,14 +174,26 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
 
                 # Commit in batches
                 if (i + 1) % 100 == 0:
-                    db.commit()
+                    try:
+                        db.commit()
+                    except Exception as e:
+                        logger.warning("Batch commit failed at %d, rolling back: %s", i + 1, e)
+                        db.rollback()
 
             except Exception as e:
                 skipped += 1
                 logger.warning("Skipped %s: %s", fpath, e)
+                try:
+                    db.rollback()
+                except Exception:
+                    pass
                 continue
 
-        db.commit()
+        try:
+            db.commit()
+        except Exception as e:
+            logger.warning("Final commit failed, rolling back: %s", e)
+            db.rollback()
 
         # Remove photos whose files no longer exist on disk
         # When target_folders is set, only consider photos within those folders
@@ -193,8 +202,12 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
             if norm_path not in existing_paths and _is_in_target(norm_path)
         ]
         if removed_ids:
-            db.query(Photo).filter(Photo.id.in_(removed_ids)).delete(synchronize_session=False)
-            db.commit()
+            try:
+                db.query(Photo).filter(Photo.id.in_(removed_ids)).delete(synchronize_session=False)
+                db.commit()
+            except Exception as e:
+                logger.warning("Failed to remove deleted photos: %s", e)
+                db.rollback()
 
         logger.info(
             "Scan complete: %d total, %d unchanged, %d new/updated, %d skipped, %d removed",
