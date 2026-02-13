@@ -498,10 +498,18 @@ input:focus, select:focus {
 .photo-card-name {
   font-size: 0.8rem;
   color: var(--text-muted);
-  display: block;
+  display: flex;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.photo-card-folder {
+  flex-shrink: 0;
+}
+
+.photo-card-filename {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* === Scroll Sentinel === */

@@ -34,3 +34,7 @@ desktop.ini
 # Environment
 .env
 .env.local
+
+# Claude Code
+.claude/
+.agents/
