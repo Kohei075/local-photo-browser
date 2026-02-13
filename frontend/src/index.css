@@ -774,11 +774,6 @@ input:focus, select:focus {
 }
 
 /* === Random Picks === */
-.random-picks-actions {
-  display: flex;
-  justify-content: center;
-  padding: 2px 0;
-}
 
 .random-picks-panel {
   background: var(--bg-secondary);
@@ -815,10 +810,49 @@ input:focus, select:focus {
 
 .random-picks-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
   gap: 12px;
   flex: 1;
   min-height: 0;
+}
+
+.random-picks-grid-horizontal {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.random-picks-grid-vertical {
+  grid-template-columns: 1fr;
+}
+
+.random-picks-layout-btn {
+  padding: 2px 8px;
+  font-size: 1.1rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: var(--radius);
+  transition: all 0.2s ease;
+}
+
+.random-picks-layout-btn:hover {
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.random-picks-layout-btn.active {
+  color: var(--text);
+  background: var(--bg-card);
+  border-color: var(--border-light);
+}
+
+.random-picks-panel:fullscreen .random-picks-layout-btn {
+  color: rgba(250, 247, 242, 0.7);
+}
+
+.random-picks-panel:fullscreen .random-picks-layout-btn:hover,
+.random-picks-panel:fullscreen .random-picks-layout-btn.active {
+  background: rgba(255,255,255,0.2);
+  color: #faf7f2;
 }
 
 .random-picks-item {

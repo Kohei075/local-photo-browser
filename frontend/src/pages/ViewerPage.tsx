@@ -220,12 +220,6 @@ export function ViewerPage() {
         </>
       )}
 
-      <div className="random-picks-actions">
-        <button className="btn btn-sm" onClick={handleRandomPicks}>
-          {t('viewer.randomPicks')}
-        </button>
-      </div>
-
       <div className="viewer-bottom-bar">
         <div className="viewer-info">
           {photo.width && photo.height && <span>{photo.width}x{photo.height}</span>}
