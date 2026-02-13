@@ -16,6 +16,7 @@ export interface RandomPicksPanelHandle {
 export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPanelProps>(function RandomPicksPanel({ photos, onSelect, onClose, onShuffle }, ref) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [layout, setLayout] = useState<'horizontal' | 'vertical'>('horizontal');
   const { t } = useTranslation();
 
   const toggleFullscreen = useCallback(async () => {
@@ -41,6 +42,20 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
     <div className="random-picks-panel" ref={panelRef}>
       <div className="random-picks-header">
         <button
+          className={`random-picks-layout-btn${layout === 'vertical' ? ' active' : ''}`}
+          onClick={() => setLayout('vertical')}
+          title={t('viewer.layoutVertical')}
+        >
+          &#9776;
+        </button>
+        <button
+          className={`random-picks-layout-btn${layout === 'horizontal' ? ' active' : ''}`}
+          onClick={() => setLayout('horizontal')}
+          title={t('viewer.layoutHorizontal')}
+        >
+          &#9783;
+        </button>
+        <button
           className="random-picks-fullscreen-btn"
           onClick={toggleFullscreen}
           title={isFullscreen ? t('viewer.exitFullscreen') : t('viewer.fullscreen')}
@@ -51,7 +66,7 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
           &times;
         </button>
       </div>
-      <div className="random-picks-grid">
+      <div className={`random-picks-grid random-picks-grid-${layout}`}>
         {photos.map((photo) => (
           <div
             key={photo.id}
