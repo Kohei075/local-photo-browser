@@ -845,16 +845,6 @@ input:focus, select:focus {
   border-color: var(--border-light);
 }
 
-.random-picks-panel:fullscreen .random-picks-layout-btn {
-  color: rgba(250, 247, 242, 0.7);
-}
-
-.random-picks-panel:fullscreen .random-picks-layout-btn:hover,
-.random-picks-panel:fullscreen .random-picks-layout-btn.active {
-  background: rgba(255,255,255,0.2);
-  color: #faf7f2;
-}
-
 .random-picks-item {
   cursor: pointer;
   border-radius: var(--radius);
@@ -909,6 +899,16 @@ input:focus, select:focus {
 .random-picks-panel:fullscreen .random-picks-fullscreen-btn,
 .random-picks-panel:fullscreen .random-picks-close {
   color: rgba(250, 247, 242, 0.7);
+}
+
+.random-picks-panel:fullscreen .random-picks-layout-btn {
+  color: rgba(250, 247, 242, 0.7);
+}
+
+.random-picks-panel:fullscreen .random-picks-layout-btn:hover,
+.random-picks-panel:fullscreen .random-picks-layout-btn.active {
+  background: rgba(255,255,255,0.2);
+  color: #faf7f2;
 }
 
 .random-picks-panel:fullscreen .random-picks-fullscreen-btn:hover,
