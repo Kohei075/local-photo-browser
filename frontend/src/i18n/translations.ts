@@ -39,6 +39,8 @@ const translations = {
   'viewer.backToPhoto': { ja: '写真に戻る', en: 'Back to Photo' },
   'viewer.backToGallery': { ja: '戻る', en: 'Back to Gallery' },
   'viewer.openInExplorer': { ja: 'エクスプローラーで開く', en: 'Open in Explorer' },
+  'viewer.layoutHorizontal': { ja: '横表示', en: 'Horizontal' },
+  'viewer.layoutVertical': { ja: '縦表示', en: 'Vertical' },
 
   // Settings
   'settings.title': { ja: '設定', en: 'Settings' },
