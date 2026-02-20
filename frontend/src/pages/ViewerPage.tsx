@@ -4,7 +4,6 @@ import { api } from '../api/client';
 import { useAppStore } from '../stores/appStore';
 import { PhotoViewer } from '../components/viewer/PhotoViewer';
 import type { PhotoViewerHandle } from '../components/viewer/PhotoViewer';
-import { NavigationControls } from '../components/viewer/NavigationControls';
 import { RandomPicksPanel } from '../components/viewer/RandomPicksPanel';
 import type { RandomPicksPanelHandle } from '../components/viewer/RandomPicksPanel';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
@@ -207,17 +206,7 @@ export function ViewerPage() {
           onShuffle={handleRandomPicks}
         />
       ) : (
-        <>
-          <PhotoViewer ref={photoViewerRef} photo={photo} />
-
-          <NavigationControls
-            onPrev={() => goTo(neighbors.prev_id)}
-            onNext={() => goTo(neighbors.next_id)}
-            onRandom={handleRandom}
-            hasPrev={neighbors.prev_id !== null}
-            hasNext={neighbors.next_id !== null}
-          />
-        </>
+        <PhotoViewer ref={photoViewerRef} photo={photo} />
       )}
 
       <div className="viewer-bottom-bar">

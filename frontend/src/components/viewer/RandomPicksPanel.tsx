@@ -81,17 +81,6 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
           </div>
         ))}
       </div>
-      <div className="navigation-controls">
-        <button className="nav-btn" onClick={onShuffle} title="Previous (Left Arrow)">
-          &#8249;
-        </button>
-        <button className="nav-btn nav-random" onClick={onShuffle} title="Shuffle">
-          &#8645;
-        </button>
-        <button className="nav-btn" onClick={onShuffle} title="Next (Right Arrow)">
-          &#8250;
-        </button>
-      </div>
     </div>
   );
 });
