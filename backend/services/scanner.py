@@ -91,6 +91,8 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
                 except Exception as e:
                     logger.warning("Error filtering dirs in %s: %s", dirpath, e)
                 for fname in filenames:
+                    if fname.startswith("._"):
+                        continue
                     ext = os.path.splitext(fname)[1].lower().lstrip(".")
                     if ext in extensions:
                         image_files.append(os.path.join(dirpath, fname))

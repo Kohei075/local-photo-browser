@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
 import type { Photo } from '../../types';
@@ -10,11 +11,14 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const { selectedPhotoIds, togglePhotoSelection } = useAppStore();
   const isSelected = selectedPhotoIds.includes(photo.id);
   const isMaxed = selectedPhotoIds.length >= 3;
+  const [failed, setFailed] = useState(false);
 
   const sep = photo.file_path.includes('/') ? '/' : '\\';
   const parts = photo.file_path.split(sep);
   const parentFolder = parts.length >= 2 ? parts[parts.length - 2] : '';
   const displayPath = parentFolder ? `${parentFolder}/${photo.file_name}` : photo.file_name;
+
+  if (failed) return null;
 
   return (
     <Link to={`/viewer/${photo.id}`} className={`photo-card${isSelected ? ' photo-card-selected' : ''}`}>
@@ -41,6 +45,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
           src={photo.thumbnail_url}
           alt={photo.file_name}
           loading="lazy"
+          onError={() => setFailed(true)}
         />
       </div>
       <div className="photo-card-info">
