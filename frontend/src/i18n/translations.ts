@@ -20,6 +20,8 @@ const translations = {
   'grid.refresh': { ja: '更新', en: 'Refresh' },
   'grid.empty': { ja: '写真がありません。設定画面でフォルダを指定してスキャンを実行してください。', en: 'No photos found. Go to Settings to set your photo folder and run a scan.' },
   'grid.loading': { ja: '写真を読み込み中...', en: 'Loading photos...' },
+  'grid.viewSelected': { ja: '選択した写真を表示 ({count})', en: 'View Selected ({count})' },
+  'grid.clearSelection': { ja: '選択解除', en: 'Clear' },
 
   // Sidebar
   'sidebar.folders': { ja: 'フォルダ', en: 'Folders' },

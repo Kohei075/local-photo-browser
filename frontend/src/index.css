@@ -579,6 +579,40 @@ input:focus, select:focus {
   display: block;
 }
 
+/* === Photo Selection Checkbox === */
+.photo-select-area {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 2;
+  padding: 4px;
+  cursor: pointer;
+}
+
+.photo-select-checkbox {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--primary);
+  pointer-events: none;
+  display: block;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.photo-card:hover .photo-select-checkbox,
+.photo-select-checkbox:checked {
+  opacity: 1;
+}
+
+.photo-select-checkbox:disabled {
+  cursor: not-allowed;
+}
+
+.photo-card-selected {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 2px var(--primary), var(--shadow-card) !important;
+}
+
 .photo-card-info {
   padding: 8px 10px;
 }
