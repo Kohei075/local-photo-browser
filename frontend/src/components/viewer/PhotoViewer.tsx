@@ -87,10 +87,10 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
   }, []);
 
   // Reset zoom when photo changes
-  useState(() => {
+  useEffect(() => {
     setScale(1);
     setPosition({ x: 0, y: 0 });
-  });
+  }, [photo.id]);
 
   return (
     <div className="photo-viewer" ref={viewerRef}>

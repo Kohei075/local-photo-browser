@@ -105,7 +105,14 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
   const [saved, setSaved] = useState(false);
   const [rescanning, setRescanning] = useState(false);
   const [rescanResult, setRescanResult] = useState<string | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { t } = useTranslation();
+
+  useEffect(() => {
+    return () => {
+      if (pollTimerRef.current) clearTimeout(pollTimerRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     if (!rootFolder) {
@@ -182,17 +189,17 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
           total: number;
         }>('/scan/status');
         if (status.is_scanning) {
-          setTimeout(poll, 1000);
+          pollTimerRef.current = setTimeout(poll, 1000);
         } else {
           setRescanning(false);
           setRescanResult(
             t('settings.rescanComplete', { count: status.processed }),
           );
-          setTimeout(() => setRescanResult(null), 5000);
+          pollTimerRef.current = setTimeout(() => setRescanResult(null), 5000);
         }
       };
       // Small delay before first poll to let the background task start
-      setTimeout(poll, 500);
+      pollTimerRef.current = setTimeout(poll, 500);
     } catch {
       setRescanning(false);
     }

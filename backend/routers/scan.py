@@ -31,6 +31,7 @@ def run_scan():
 def start_scan(background_tasks: BackgroundTasks):
     if scan_status["is_scanning"]:
         return {"message": "Scan already in progress"}
+    scan_status["is_scanning"] = True
     background_tasks.add_task(run_scan)
     return {"message": "Scan started"}
 
@@ -61,6 +62,7 @@ def start_partial_scan(req: PartialScanRequest, background_tasks: BackgroundTask
         return {"message": "Scan already in progress"}
     if not req.folders:
         return {"message": "No folders specified"}
+    scan_status["is_scanning"] = True
     background_tasks.add_task(run_partial_scan, req.folders)
     return {"message": "Partial scan started"}
 
