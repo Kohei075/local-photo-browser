@@ -3,6 +3,7 @@ import { FolderSetting } from '../components/settings/FolderSetting';
 import { FolderSelectTree } from '../components/settings/FolderSelectTree';
 import { ScanButton } from '../components/settings/ScanButton';
 import { LanguageSetting } from '../components/settings/LanguageSetting';
+import { ThemeSetting } from '../components/settings/ThemeSetting';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useTranslation } from '../i18n/useTranslation';
 
@@ -34,6 +35,7 @@ export function SettingsPage() {
       />
 
       <div className="setting-section">
+        <ThemeSetting />
         <LanguageSetting />
       </div>
     </div>
