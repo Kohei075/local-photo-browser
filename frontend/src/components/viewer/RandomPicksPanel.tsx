@@ -74,7 +74,7 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
             onClick={() => onSelect(photo.id)}
           >
             <img
-              src={`/api/images/${photo.id}/full`}
+              src={`/api/images/${photo.id}/full?v=${photo.modified_at}`}
               alt={photo.file_name}
               draggable={false}
             />

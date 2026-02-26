@@ -1,17 +1,22 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { FolderTreeResponse, SearchResponse, FolderNode } from '../../types';
 
-function FolderTreeItem({ node, depth, onSelect, expandToPath }: {
-  node: FolderNode; depth: number; onSelect: (path: string | null) => void; expandToPath: string | null;
+function FolderTreeItem({ node, depth, onSelect, expandToPath, collapseKey }: {
+  node: FolderNode; depth: number; onSelect: (path: string | null) => void; expandToPath: string | null; collapseKey: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const { selectedFolderPath } = useAppStore();
   const isSelected = selectedFolderPath === node.path;
   const hasChildren = node.children.length > 0;
+
+  // Collapse all when collapseKey changes
+  useEffect(() => {
+    if (collapseKey > 0) setIsOpen(false);
+  }, [collapseKey]);
 
   // Auto-expand when this node is an ancestor of expandToPath
   useEffect(() => {
@@ -47,12 +52,28 @@ function FolderTreeItem({ node, depth, onSelect, expandToPath }: {
       {isOpen && hasChildren && (
         <div>
           {node.children.map((child) => (
-            <FolderTreeItem key={child.path} node={child} depth={depth + 1} onSelect={onSelect} expandToPath={expandToPath} />
+            <FolderTreeItem key={child.path} node={child} depth={depth + 1} onSelect={onSelect} expandToPath={expandToPath} collapseKey={collapseKey} />
           ))}
         </div>
       )}
     </div>
   );
+}
+
+const SIDEBAR_WIDTH_KEY = 'sidebar-width';
+const SIDEBAR_MIN = 180;
+const SIDEBAR_MAX = 480;
+const SIDEBAR_DEFAULT = 260;
+
+function getSavedWidth(): number {
+  try {
+    const v = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+    if (v) {
+      const n = Number(v);
+      if (n >= SIDEBAR_MIN && n <= SIDEBAR_MAX) return n;
+    }
+  } catch { /* ignore */ }
+  return SIDEBAR_DEFAULT;
 }
 
 export function FolderSidebar() {
@@ -61,9 +82,43 @@ export function FolderSidebar() {
   const [searchResults, setSearchResults] = useState<SearchResponse['results']>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [expandToPath, setExpandToPath] = useState<string | null>(null);
+  const [collapseKey, setCollapseKey] = useState(0);
+  const [sidebarWidth, setSidebarWidth] = useState(getSavedWidth);
+  const [isDragging, setIsDragging] = useState(false);
+  const draggingRef = useRef(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
+
+  const handleResizeStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    draggingRef.current = true;
+    setIsDragging(true);
+    document.body.style.userSelect = 'none';
+    document.body.style.cursor = 'col-resize';
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!draggingRef.current) return;
+      const newWidth = Math.min(SIDEBAR_MAX, Math.max(SIDEBAR_MIN, ev.clientX));
+      setSidebarWidth(newWidth);
+    };
+
+    const onMouseUp = () => {
+      draggingRef.current = false;
+      setIsDragging(false);
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      setSidebarWidth((w) => {
+        try { localStorage.setItem(SIDEBAR_WIDTH_KEY, String(w)); } catch { /* ignore */ }
+        return w;
+      });
+    };
+
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, []);
 
   const handleFolderSelect = useCallback((path: string | null) => {
     setSelectedFolderPath(path);
@@ -121,17 +176,16 @@ export function FolderSidebar() {
   if (!isSidebarOpen) {
     return (
       <button className="sidebar-toggle-btn" onClick={() => setIsSidebarOpen(true)} title="Show sidebar">
-        {'\u25B6'}
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1" y="2" width="14" height="12" rx="2" /><line x1="6" y1="2" x2="6" y2="14" /></svg>
       </button>
     );
   }
 
   return (
-    <aside className="folder-sidebar">
+    <aside className="folder-sidebar" style={{ width: sidebarWidth }}>
       <div className="sidebar-header">
-        <span className="sidebar-title">{t('sidebar.folders')}</span>
         <button className="sidebar-close-btn" onClick={() => setIsSidebarOpen(false)} title="Hide sidebar">
-          {'\u25C0'}
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"><rect x="1" y="2" width="14" height="12" rx="2" /><line x1="6" y1="2" x2="6" y2="14" /><line x1="10" y1="6.5" x2="8" y2="8" /><line x1="8" y1="8" x2="10" y2="9.5" /></svg>
         </button>
       </div>
 
@@ -168,24 +222,36 @@ export function FolderSidebar() {
         </div>
       ) : (
         <div className="sidebar-tree">
-          {selectedFolderPath && (
-            <button className="sidebar-clear-btn" onClick={() => handleFolderSelect(null)}>
-              {t('sidebar.allPhotos')}
-            </button>
-          )}
+          <button className="sidebar-clear-btn" onClick={() => handleFolderSelect(null)} disabled={!selectedFolderPath}>
+            {t('sidebar.allPhotos')}
+          </button>
           {folderRoot && (
             <div className="folder-tree-root" title={folderRoot}>
               {folderRoot.split(/[/\\]/).pop() || folderRoot}
             </div>
           )}
+          <div className="sidebar-tree-actions">
+            <button
+              className="sidebar-collapse-btn"
+              onClick={() => setCollapseKey((k) => k + 1)}
+              title={t('sidebar.collapseAll')}
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 5.5L7 9.5L11 5.5" /></svg>
+              {t('sidebar.collapseAll')}
+            </button>
+          </div>
           {folderTree.map((node) => (
-            <FolderTreeItem key={node.path} node={node} depth={0} onSelect={handleFolderSelect} expandToPath={expandToPath} />
+            <FolderTreeItem key={node.path} node={node} depth={0} onSelect={handleFolderSelect} expandToPath={expandToPath} collapseKey={collapseKey} />
           ))}
           {folderTree.length === 0 && (
             <div className="sidebar-empty">{t('sidebar.noFolders')}</div>
           )}
         </div>
       )}
+      <div
+        className={`sidebar-resize-handle${isDragging ? ' active' : ''}`}
+        onMouseDown={handleResizeStart}
+      />
     </aside>
   );
 }

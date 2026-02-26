@@ -105,7 +105,7 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
         style={{ cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
       >
         <img
-          src={`/api/images/${photo.id}/full`}
+          src={`/api/images/${photo.id}/full?v=${photo.modified_at}`}
           alt={photo.file_name}
           style={{
             transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,

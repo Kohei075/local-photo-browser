@@ -65,14 +65,14 @@
   --bg-secondary: #1c1c20;
   --bg-card: #242428;
 
-  --text: #e0dbd5;
-  --text-muted: #8a847c;
-  --text-secondary: #afa89e;
-  --text-on-primary: #faf7f2;
+  --text: #e2e4ea;
+  --text-muted: #7f8490;
+  --text-secondary: #a8acb8;
+  --text-on-primary: #ffffff;
 
-  --primary: #d4935a;
-  --primary-hover: #c4833e;
-  --primary-light: #7a5a3a;
+  --primary: #6b9fd4;
+  --primary-hover: #5a8fc4;
+  --primary-light: #3a5570;
 
   --border: #333338;
   --border-light: #2a2a2f;
@@ -86,7 +86,7 @@
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.20), 0 1px 2px rgba(0, 0, 0, 0.15);
   --shadow-card-hover: 0 6px 20px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.20);
 
-  --focus-ring: rgba(212, 147, 90, 0.25);
+  --focus-ring: rgba(107, 159, 212, 0.25);
   --overlay-bg: rgba(0, 0, 0, 0.65);
   --hover-subtle: rgba(255, 255, 255, 0.06);
   --header-shadow: rgba(0, 0, 0, 0.20);
@@ -245,36 +245,47 @@ input:focus, select:focus {
 
 /* === Folder Sidebar === */
 .folder-sidebar {
-  width: 260px;
-  min-width: 260px;
+  min-width: 180px;
+  max-width: 480px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border);
   height: calc(100vh - var(--header-height));
-  overflow-y: auto;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
   box-shadow: inset -8px 0 16px -8px var(--sidebar-inset);
+  position: relative;
+}
+
+.sidebar-resize-handle {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 4px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 10;
+  transition: background-color 0.15s ease;
+}
+
+.sidebar-resize-handle:hover,
+.sidebar-resize-handle.active {
+  background-color: var(--primary);
 }
 
 .sidebar-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 14px 14px 10px;
+  justify-content: flex-start;
+  padding: 6px 8px;
   border-bottom: 1px solid var(--border);
 }
 
-.sidebar-title {
-  font-family: 'Fraunces', Georgia, serif;
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--text);
-  letter-spacing: -0.01em;
-}
-
 .sidebar-close-btn {
-  padding: 2px 6px;
-  font-size: 0.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
   border-radius: 4px;
   color: var(--text-muted);
 }
@@ -289,12 +300,14 @@ input:focus, select:focus {
   left: 0;
   top: calc(var(--header-height) + 12px);
   z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: var(--bg-secondary);
   border: 1px solid var(--border);
   border-left: none;
   border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
   padding: 8px 6px;
-  font-size: 0.75rem;
   color: var(--text-muted);
   box-shadow: var(--shadow-sm);
   transition: background 0.2s ease, color 0.2s ease;
@@ -332,6 +345,32 @@ input:focus, select:focus {
   padding-bottom: 12px;
 }
 
+.sidebar-tree-actions {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px;
+}
+
+.sidebar-collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  border-radius: 4px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--bg-card);
+  color: var(--text);
+}
+
+.sidebar-collapse-btn svg {
+  transform: rotate(180deg);
+}
+
 .sidebar-clear-btn {
   display: block;
   width: calc(100% - 16px);
@@ -345,8 +384,13 @@ input:focus, select:focus {
   color: var(--text-on-primary);
 }
 
-.sidebar-clear-btn:hover {
+.sidebar-clear-btn:hover:not(:disabled) {
   background: var(--primary-hover);
+}
+
+.sidebar-clear-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .folder-tree-root {
@@ -370,6 +414,7 @@ input:focus, select:focus {
   user-select: none;
   border-radius: 4px;
   margin: 0 4px;
+  min-width: 0;
 }
 
 .folder-tree-item:hover {
@@ -430,6 +475,8 @@ input:focus, select:focus {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  min-width: 0;
+  flex: 1;
 }
 
 /* === Sidebar Search Results === */
@@ -1399,7 +1446,6 @@ input:focus, select:focus {
   }
 
   .folder-sidebar {
-    width: 220px;
-    min-width: 220px;
+    min-width: 180px;
   }
 }

@@ -14,6 +14,8 @@ router = APIRouter()
 
 
 def photo_to_response(photo: Photo) -> PhotoResponse:
+    # Use scanned_at as cache buster to avoid stale browser cache after DB reset
+    v = photo.scanned_at or ""
     return PhotoResponse(
         id=photo.id,
         file_path=photo.file_path,
@@ -26,7 +28,7 @@ def photo_to_response(photo: Photo) -> PhotoResponse:
         modified_at=photo.modified_at,
         taken_at=photo.taken_at,
         is_favorite=bool(photo.is_favorite),
-        thumbnail_url=f"/api/images/{photo.id}/thumbnail",
+        thumbnail_url=f"/api/images/{photo.id}/thumbnail?v={v}",
     )
 
 

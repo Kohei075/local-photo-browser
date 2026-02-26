@@ -40,7 +40,7 @@ def get_full_image(photo_id: int, db: Session = Depends(get_db)):
     return FileResponse(
         fpath,
         media_type=media_type,
-        headers={"Cache-Control": "max-age=3600"},
+        headers={"Cache-Control": "no-cache"},
     )
 
 
@@ -70,7 +70,7 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
     return FileResponse(
         thumb_path,
         media_type="image/jpeg",
-        headers={"Cache-Control": "max-age=3600"},
+        headers={"Cache-Control": "no-cache"},
     )
 
 
