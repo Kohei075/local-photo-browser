@@ -1,18 +1,32 @@
-export type Theme = 'beige' | 'dark' | 'light';
+export type Theme = 'system' | 'dark' | 'light';
 
-let currentTheme: Theme = (localStorage.getItem('app_theme') as Theme) || 'beige';
+const stored = localStorage.getItem('app_theme');
+let currentTheme: Theme = (stored === 'dark' || stored === 'light') ? stored : 'system';
 const listeners = new Set<() => void>();
 
+function getSystemPreference(): 'dark' | 'light' {
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 function applyTheme(theme: Theme) {
-  if (theme === 'beige') {
-    document.documentElement.removeAttribute('data-theme');
+  const resolved = theme === 'system' ? getSystemPreference() : theme;
+  if (resolved === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
   } else {
-    document.documentElement.setAttribute('data-theme', theme);
+    document.documentElement.setAttribute('data-theme', 'light');
   }
 }
 
 // Apply on load
 applyTheme(currentTheme);
+
+// Listen for OS theme changes when using system theme
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+  if (currentTheme === 'system') {
+    applyTheme('system');
+    listeners.forEach((fn) => fn());
+  }
+});
 
 export function getTheme(): Theme {
   return currentTheme;

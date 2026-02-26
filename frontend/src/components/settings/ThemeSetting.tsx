@@ -3,8 +3,8 @@ import { useTheme } from '../../theme/useTheme';
 import { setTheme } from '../../theme/theme';
 import type { Theme } from '../../theme/theme';
 
-const themes: { value: Theme; labelKey: 'settings.themeBeige' | 'settings.themeDark' | 'settings.themeLight'; swatch: string }[] = [
-  { value: 'beige', labelKey: 'settings.themeBeige', swatch: 'theme-swatch-beige' },
+const themes: { value: Theme; labelKey: 'settings.themeSystem' | 'settings.themeDark' | 'settings.themeLight'; swatch: string }[] = [
+  { value: 'system', labelKey: 'settings.themeSystem', swatch: 'theme-swatch-system' },
   { value: 'dark', labelKey: 'settings.themeDark', swatch: 'theme-swatch-dark' },
   { value: 'light', labelKey: 'settings.themeLight', swatch: 'theme-swatch-light' },
 ];

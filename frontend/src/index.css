@@ -5,45 +5,45 @@
   padding: 0;
 }
 
-/* === Theme: Beige (default) === */
+/* === Theme: Light (default) === */
 :root {
   /* Backgrounds */
-  --bg: #f5f0e8;
-  --bg-secondary: #faf7f2;
-  --bg-card: #ede8de;
+  --bg: #f8f9fb;
+  --bg-secondary: #ffffff;
+  --bg-card: #eef0f4;
 
   /* Text */
-  --text: #3b332a;
-  --text-muted: #8a7e72;
-  --text-secondary: #6b5f53;
-  --text-on-primary: #faf7f2;
+  --text: #1e1e24;
+  --text-muted: #7a7d86;
+  --text-secondary: #52545c;
+  --text-on-primary: #ffffff;
 
   /* Accent */
-  --primary: #b8704a;
-  --primary-hover: #a3613d;
-  --primary-light: #d4a484;
+  --primary: #5a7ea8;
+  --primary-hover: #4a6e96;
+  --primary-light: #a0bcd8;
 
   /* Borders */
-  --border: #d9d0c3;
-  --border-light: #e8e0d4;
+  --border: #d8dbe2;
+  --border-light: #e8eaef;
 
   /* Status */
-  --success: #6b8f5e;
-  --danger: #c4594a;
+  --success: #5a9060;
+  --danger: #c44e4e;
 
   /* Shadows */
-  --shadow-sm: 0 1px 3px rgba(107, 87, 67, 0.08);
-  --shadow-md: 0 4px 12px rgba(107, 87, 67, 0.10);
-  --shadow-lg: 0 8px 24px rgba(107, 87, 67, 0.12);
-  --shadow-card: 0 2px 8px rgba(107, 87, 67, 0.08), 0 1px 2px rgba(107, 87, 67, 0.06);
-  --shadow-card-hover: 0 6px 20px rgba(107, 87, 67, 0.14), 0 2px 6px rgba(107, 87, 67, 0.08);
+  --shadow-sm: 0 1px 3px rgba(30, 40, 60, 0.06);
+  --shadow-md: 0 4px 12px rgba(30, 40, 60, 0.08);
+  --shadow-lg: 0 8px 24px rgba(30, 40, 60, 0.10);
+  --shadow-card: 0 2px 8px rgba(30, 40, 60, 0.06), 0 1px 2px rgba(30, 40, 60, 0.04);
+  --shadow-card-hover: 0 6px 20px rgba(30, 40, 60, 0.10), 0 2px 6px rgba(30, 40, 60, 0.06);
 
   /* Interaction */
-  --focus-ring: rgba(184, 112, 74, 0.15);
-  --overlay-bg: rgba(59, 51, 42, 0.5);
-  --hover-subtle: rgba(59, 51, 42, 0.08);
-  --header-shadow: rgba(107, 87, 67, 0.06);
-  --sidebar-inset: rgba(107, 87, 67, 0.04);
+  --focus-ring: rgba(90, 126, 168, 0.18);
+  --overlay-bg: rgba(30, 30, 36, 0.40);
+  --hover-subtle: rgba(30, 40, 60, 0.06);
+  --header-shadow: rgba(30, 40, 60, 0.05);
+  --sidebar-inset: rgba(30, 40, 60, 0.03);
 
   /* Geometry */
   --radius: 12px;
@@ -52,11 +52,11 @@
   --header-height: 56px;
 
   /* Photo areas */
-  --photo-bg: #2a2420;
-  --photo-overlay: rgba(42, 36, 32, 0.75);
+  --photo-bg: #24262c;
+  --photo-overlay: rgba(24, 26, 32, 0.75);
 
   /* Texture */
-  --noise-opacity: 0.03;
+  --noise-opacity: 0.02;
 }
 
 /* === Theme: Dark === */
@@ -98,44 +98,7 @@
   --noise-opacity: 0.015;
 }
 
-/* === Theme: Light === */
-[data-theme="light"] {
-  --bg: #f8f9fb;
-  --bg-secondary: #ffffff;
-  --bg-card: #eef0f4;
-
-  --text: #1e1e24;
-  --text-muted: #7a7d86;
-  --text-secondary: #52545c;
-  --text-on-primary: #ffffff;
-
-  --primary: #5a7ea8;
-  --primary-hover: #4a6e96;
-  --primary-light: #a0bcd8;
-
-  --border: #d8dbe2;
-  --border-light: #e8eaef;
-
-  --success: #5a9060;
-  --danger: #c44e4e;
-
-  --shadow-sm: 0 1px 3px rgba(30, 40, 60, 0.06);
-  --shadow-md: 0 4px 12px rgba(30, 40, 60, 0.08);
-  --shadow-lg: 0 8px 24px rgba(30, 40, 60, 0.10);
-  --shadow-card: 0 2px 8px rgba(30, 40, 60, 0.06), 0 1px 2px rgba(30, 40, 60, 0.04);
-  --shadow-card-hover: 0 6px 20px rgba(30, 40, 60, 0.10), 0 2px 6px rgba(30, 40, 60, 0.06);
-
-  --focus-ring: rgba(90, 126, 168, 0.18);
-  --overlay-bg: rgba(30, 30, 36, 0.40);
-  --hover-subtle: rgba(30, 40, 60, 0.06);
-  --header-shadow: rgba(30, 40, 60, 0.05);
-  --sidebar-inset: rgba(30, 40, 60, 0.03);
-
-  --photo-bg: #24262c;
-  --photo-overlay: rgba(24, 26, 32, 0.75);
-
-  --noise-opacity: 0.02;
-}
+/* [data-theme="light"] uses :root defaults above */
 
 /* === Keyframes === */
 @keyframes fadeInUp {
@@ -1375,8 +1338,8 @@ input:focus, select:focus {
   flex-shrink: 0;
 }
 
-.theme-swatch-beige {
-  background: linear-gradient(135deg, #f5f0e8 50%, #b8704a 50%);
+.theme-swatch-system {
+  background: linear-gradient(135deg, #f8f9fb 50%, #141416 50%);
 }
 
 .theme-swatch-dark {
