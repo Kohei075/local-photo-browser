@@ -9,7 +9,7 @@ from database import init_db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
 
-app = FastAPI(title="Web Pic Browser", version="1.0.0")
+app = FastAPI(title="Local Photo Browser", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,

@@ -13,7 +13,7 @@ export function Header() {
   return (
     <header className="header">
       <div className="header-inner">
-        <Link to="/" className="header-logo">Web Pic Browser</Link>
+        <Link to="/" className="header-logo">Local Photo Browser</Link>
         <nav className="header-nav">
           {navItems.map((item) => (
             <Link
