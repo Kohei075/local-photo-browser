@@ -128,7 +128,7 @@ npm run dev
 ## プロジェクト構成
 
 ```
-web-pic-browser/
+local-photo-browser/
 ├── backend/
 │   ├── main.py              # FastAPI アプリケーション
 │   ├── config.py            # パス設定

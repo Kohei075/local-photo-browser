@@ -387,7 +387,7 @@ AppStore {
 ## 10. ディレクトリ構成
 
 ```
-web-pic-browser/
+local-photo-browser/
 ├── backend/
 │   ├── main.py              # FastAPI エントリーポイント
 │   ├── config.py             # 設定・パス定義

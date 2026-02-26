@@ -1,5 +1,5 @@
 """
-Web Pic Browser - Startup Script
+Local Photo Browser - Startup Script
 
 Usage:
   py scripts/start.py          # Production mode (serves built frontend)
@@ -109,7 +109,7 @@ def main():
 
         print("", flush=True)
         print("=" * 50, flush=True)
-        print("  Web Pic Browser - Development Mode", flush=True)
+        print("  Local Photo Browser - Development Mode", flush=True)
         print("=" * 50, flush=True)
         print("  Frontend : http://localhost:5173", flush=True)
         print("  Backend  : http://127.0.0.1:8000", flush=True)
