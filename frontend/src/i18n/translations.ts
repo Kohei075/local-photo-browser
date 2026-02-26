@@ -68,7 +68,7 @@ const translations = {
   'settings.browse': { ja: '選択', en: 'Browse' },
   'settings.langLabel': { ja: '表示言語:', en: 'Display Language:' },
   'settings.themeLabel': { ja: 'テーマ:', en: 'Theme:' },
-  'settings.themeBeige': { ja: 'ベージュ', en: 'Beige' },
+  'settings.themeSystem': { ja: 'システム設定に合わせる', en: 'System' },
   'settings.themeDark': { ja: 'ダーク', en: 'Dark' },
   'settings.themeLight': { ja: 'ライト', en: 'Light' },
   'settings.resetData': { ja: 'データリセット', en: 'Reset Data' },

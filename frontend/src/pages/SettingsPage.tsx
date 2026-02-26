@@ -21,8 +21,7 @@ export function SettingsPage() {
 
       <FolderSetting
         currentFolder={settings.root_folder}
-        extensions={settings.extensions}
-        onSave={(folder, exts) => updateSettings({ root_folder: folder, extensions: exts })}
+        onSave={(folder) => updateSettings({ root_folder: folder })}
       />
 
       <FolderSelectTree rootFolder={settings.root_folder} extensions={settings.extensions} />

@@ -16,7 +16,25 @@
       "Bash(npx vite build)",
       "Bash(python -c:*)",
       "Bash(python:*)",
-      "Bash(npx skills add:*)"
+      "Bash(npx skills add:*)",
+      "Bash(git checkout:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(gh pr create:*)",
+      "Bash(gh pr list:*)",
+      "Bash(git fetch:*)",
+      "Bash(git merge:*)",
+      "Bash(git rebase:*)",
+      "Bash(git stash:*)",
+      "Bash(gh pr close:*)",
+      "Bash(git pull:*)",
+      "Bash(test:*)",
+      "Bash(tail:*)",
+      "Bash(cd \"/c/Users/PC_User/Desktop/Gitリポジトリ/personalDev/pic-gallery\" && npm install 2>&1)",
+      "Bash(npm view:*)",
+      "Bash(cd \"/c/Users/PC_User/Desktop/Gitリポジトリ/personalDev/pic-gallery\" && rm -rf node_modules package-lock.json && npm install 2>&1)"
     ]
-  }
+  },
+  "spinnerTipsEnabled": false
 }
