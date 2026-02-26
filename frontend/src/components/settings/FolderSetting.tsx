@@ -4,13 +4,11 @@ import { useTranslation } from '../../i18n/useTranslation';
 
 interface FolderSettingProps {
   currentFolder: string;
-  extensions: string;
-  onSave: (folder: string, extensions: string) => Promise<unknown>;
+  onSave: (folder: string) => Promise<unknown>;
 }
 
-export function FolderSetting({ currentFolder, extensions, onSave }: FolderSettingProps) {
+export function FolderSetting({ currentFolder, onSave }: FolderSettingProps) {
   const [folder, setFolder] = useState(currentFolder);
-  const [exts, setExts] = useState(extensions);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [picking, setPicking] = useState(false);
@@ -18,14 +16,13 @@ export function FolderSetting({ currentFolder, extensions, onSave }: FolderSetti
 
   useEffect(() => {
     setFolder(currentFolder);
-    setExts(extensions);
-  }, [currentFolder, extensions]);
+  }, [currentFolder]);
 
   const handleSave = async () => {
     setError('');
     setSaved(false);
     try {
-      await onSave(folder, exts);
+      await onSave(folder);
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     } catch {
@@ -60,16 +57,6 @@ export function FolderSetting({ currentFolder, extensions, onSave }: FolderSetti
         <button className="btn btn-sm" onClick={handleBrowse} disabled={picking}>
           {t('settings.browse')}
         </button>
-      </div>
-      <div className="setting-row">
-        <label>{t('settings.extensions')}</label>
-        <input
-          type="text"
-          value={exts}
-          onChange={(e) => setExts(e.target.value)}
-          placeholder="jpg,jpeg,png,webp"
-          className="setting-input setting-input-ext"
-        />
       </div>
       <button className="btn btn-primary" onClick={handleSave}>
         {t('settings.save')}
