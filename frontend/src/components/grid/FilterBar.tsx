@@ -3,10 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { api } from '../../api/client';
-import type { Photo, PhotoListResponse } from '../../types';
+import type { PhotoListResponse } from '../../types';
 
 export function FilterBar() {
-  const { selectedFolderPath, selectedPhotoIds, photos, clearPhotoSelection } = useAppStore();
+  const { selectedFolderPath, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -25,13 +25,10 @@ export function FilterBar() {
   }, [selectedFolderPath, navigate]);
 
   const handleViewSelected = useCallback(() => {
-    const selectedPhotos: Photo[] = selectedPhotoIds
-      .map((id) => photos.find((p) => p.id === id))
-      .filter((p): p is Photo => p !== undefined);
     if (selectedPhotos.length > 0) {
       navigate(`/viewer/${selectedPhotos[0].id}`, { state: { randomPicks: selectedPhotos } });
     }
-  }, [selectedPhotoIds, photos, navigate]);
+  }, [selectedPhotos, navigate]);
 
   return (
     <div className="filter-bar">
@@ -43,6 +40,23 @@ export function FilterBar() {
           <button className="btn btn-sm btn-primary" onClick={handleViewSelected}>
             {t('grid.viewSelected', { count: selectedPhotoIds.length })}
           </button>
+          <div className="selection-thumbnails">
+            {selectedPhotos.map((photo) => (
+              <button
+                key={photo.id}
+                className="selection-thumbnail-btn"
+                onClick={() => togglePhotoSelection(photo)}
+                title={photo.file_name}
+              >
+                <img
+                  src={photo.thumbnail_url}
+                  alt={photo.file_name}
+                  className="selection-thumbnail"
+                />
+                <span className="selection-thumbnail-remove">x</span>
+              </button>
+            ))}
+          </div>
           <button className="btn btn-sm" onClick={clearPhotoSelection}>
             {t('grid.clearSelection')}
           </button>

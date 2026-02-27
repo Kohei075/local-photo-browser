@@ -21,6 +21,7 @@ interface AppState {
 
   // Photo selection (up to 3)
   selectedPhotoIds: number[];
+  selectedPhotos: Photo[];
 
   // Scan
   scanStatus: ScanStatus | null;
@@ -46,7 +47,7 @@ interface AppState {
   setFolderTree: (root: string, folders: FolderNode[]) => void;
   setSelectedFolderPath: (path: string | null) => void;
   setIsSidebarOpen: (open: boolean) => void;
-  togglePhotoSelection: (id: number) => void;
+  togglePhotoSelection: (photo: Photo) => void;
   clearPhotoSelection: () => void;
 }
 
@@ -66,6 +67,7 @@ export const useAppStore = create<AppState>((set) => ({
   currentPhotoId: null,
 
   selectedPhotoIds: [],
+  selectedPhotos: [],
 
   scanStatus: null,
 
@@ -98,13 +100,19 @@ export const useAppStore = create<AppState>((set) => ({
   setFolderTree: (folderRoot, folderTree) => set({ folderRoot, folderTree }),
   setSelectedFolderPath: (selectedFolderPath) => set({ selectedFolderPath, photos: [], page: 1 }),
   setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
-  togglePhotoSelection: (id) =>
+  togglePhotoSelection: (photo) =>
     set((state) => {
-      if (state.selectedPhotoIds.includes(id)) {
-        return { selectedPhotoIds: state.selectedPhotoIds.filter((pid) => pid !== id) };
+      if (state.selectedPhotoIds.includes(photo.id)) {
+        return {
+          selectedPhotoIds: state.selectedPhotoIds.filter((pid) => pid !== photo.id),
+          selectedPhotos: state.selectedPhotos.filter((p) => p.id !== photo.id),
+        };
       }
       if (state.selectedPhotoIds.length >= 3) return state;
-      return { selectedPhotoIds: [...state.selectedPhotoIds, id] };
+      return {
+        selectedPhotoIds: [...state.selectedPhotoIds, photo.id],
+        selectedPhotos: [...state.selectedPhotos, photo],
+      };
     }),
-  clearPhotoSelection: () => set({ selectedPhotoIds: [] }),
+  clearPhotoSelection: () => set({ selectedPhotoIds: [], selectedPhotos: [] }),
 }));

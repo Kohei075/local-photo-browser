@@ -29,7 +29,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
             e.preventDefault();
             e.stopPropagation();
             if (!isSelected && isMaxed) return;
-            togglePhotoSelection(photo.id);
+            togglePhotoSelection(photo);
           }}
         >
           <input
