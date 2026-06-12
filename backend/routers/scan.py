@@ -4,11 +4,14 @@ from fastapi import APIRouter, BackgroundTasks, Depends
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from config import SUPPORTED_EXTENSIONS
 from database import get_db, SessionLocal
 from models.setting import Setting
 from services.scanner import scan_folder, scan_status
 
 router = APIRouter()
+
+DEFAULT_EXTENSIONS = ",".join(sorted(SUPPORTED_EXTENSIONS))
 
 
 def run_scan():
@@ -16,7 +19,7 @@ def run_scan():
     try:
         settings = {s.key: s.value for s in db.query(Setting).all()}
         root_folder = settings.get("root_folder", "")
-        extensions_str = settings.get("extensions", "jpg,jpeg,png,webp")
+        extensions_str = settings.get("extensions", DEFAULT_EXTENSIONS)
         extensions = {e.strip().lower() for e in extensions_str.split(",") if e.strip()}
         excluded_str = settings.get("excluded_folders", "[]")
         excluded_folders = set(json.loads(excluded_str))
@@ -45,7 +48,7 @@ def run_partial_scan(folders: list[str]):
     try:
         settings = {s.key: s.value for s in db.query(Setting).all()}
         root_folder = settings.get("root_folder", "")
-        extensions_str = settings.get("extensions", "jpg,jpeg,png,webp")
+        extensions_str = settings.get("extensions", DEFAULT_EXTENSIONS)
         extensions = {e.strip().lower() for e in extensions_str.split(",") if e.strip()}
         excluded_str = settings.get("excluded_folders", "[]")
         excluded_folders = set(json.loads(excluded_str))

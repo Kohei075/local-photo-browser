@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
+import { isVideo } from '../../utils/media';
 import type { Photo } from '../../types';
 
 interface PhotoCardProps {
@@ -11,6 +12,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const { selectedPhotoIds, togglePhotoSelection, setLastViewedPhotoId } = useAppStore();
   const isSelected = selectedPhotoIds.includes(photo.id);
   const isMaxed = selectedPhotoIds.length >= 4;
+  const video = isVideo(photo.extension);
   const [failed, setFailed] = useState(false);
 
   const sep = photo.file_path.includes('/') ? '/' : '\\';
@@ -18,7 +20,7 @@ export function PhotoCard({ photo }: PhotoCardProps) {
   const parentFolder = parts.length >= 2 ? parts[parts.length - 2] : '';
   const displayPath = parentFolder ? `${parentFolder}/${photo.file_name}` : photo.file_name;
 
-  if (failed) return null;
+  if (failed && !video) return null;
 
   return (
     <Link
@@ -46,12 +48,18 @@ export function PhotoCard({ photo }: PhotoCardProps) {
             tabIndex={-1}
           />
         </div>
-        <img
-          src={photo.thumbnail_url}
-          alt={photo.file_name}
-          loading="lazy"
-          onError={() => setFailed(true)}
-        />
+        {video ? (
+          <div className="photo-card-video-placeholder">
+            <span className="photo-card-play-icon">&#9654;</span>
+          </div>
+        ) : (
+          <img
+            src={photo.thumbnail_url}
+            alt={photo.file_name}
+            loading="lazy"
+            onError={() => setFailed(true)}
+          />
+        )}
       </div>
       <div className="photo-card-info">
         <span className="photo-card-name" title={displayPath}>

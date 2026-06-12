@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { api } from '../../api/client';
+import { isVideo } from '../../utils/media';
 import type { PhotoListResponse } from '../../types';
 
 export function FilterBar() {
@@ -48,11 +49,15 @@ export function FilterBar() {
                 onClick={() => togglePhotoSelection(photo)}
                 title={photo.file_name}
               >
-                <img
-                  src={photo.thumbnail_url}
-                  alt={photo.file_name}
-                  className="selection-thumbnail"
-                />
+                {isVideo(photo.extension) ? (
+                  <span className="selection-thumbnail selection-thumbnail-video">&#9654;</span>
+                ) : (
+                  <img
+                    src={photo.thumbnail_url}
+                    alt={photo.file_name}
+                    className="selection-thumbnail"
+                  />
+                )}
                 <span className="selection-thumbnail-remove">x</span>
               </button>
             ))}

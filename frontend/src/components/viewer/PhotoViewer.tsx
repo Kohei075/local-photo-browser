@@ -2,6 +2,7 @@ import { useState, useRef, useCallback, useEffect, useImperativeHandle, forwardR
 import type { Photo } from '../../types';
 import { ZoomControls } from './ZoomControls';
 import { useTranslation } from '../../i18n/useTranslation';
+import { isVideo } from '../../utils/media';
 
 interface PhotoViewerProps {
   photo: Photo;
@@ -20,6 +21,7 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const video = isVideo(photo.extension);
 
   const handleZoomIn = useCallback(() => {
     setScale((s) => Math.min(s * 1.3, 5));
@@ -43,6 +45,7 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
 
   // Use native event listener with { passive: false } to allow preventDefault()
   useEffect(() => {
+    if (video) return;
     const container = containerRef.current;
     if (!container) return;
     const onWheel = (e: WheelEvent) => {
@@ -52,7 +55,7 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
     };
     container.addEventListener('wheel', onWheel, { passive: false });
     return () => container.removeEventListener('wheel', onWheel);
-  }, [handleZoomIn, handleZoomOut]);
+  }, [handleZoomIn, handleZoomOut, video]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (scale > 1) {
@@ -109,17 +112,28 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
         onMouseLeave={handleMouseUp}
-        style={{ cursor: scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
+        style={{ cursor: !video && scale > 1 ? (isDragging ? 'grabbing' : 'grab') : 'default' }}
       >
-        <img
-          src={`/api/images/${photo.id}/full?v=${photo.modified_at}`}
-          alt={photo.file_name}
-          style={{
-            transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
-            transition: isDragging ? 'none' : 'transform 0.2s',
-          }}
-          draggable={false}
-        />
+        {video ? (
+          <video
+            key={photo.id}
+            className="photo-viewer-video"
+            src={`/api/images/${photo.id}/full?v=${photo.modified_at}`}
+            controls
+            autoPlay
+            playsInline
+          />
+        ) : (
+          <img
+            src={`/api/images/${photo.id}/full?v=${photo.modified_at}`}
+            alt={photo.file_name}
+            style={{
+              transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
+              transition: isDragging ? 'none' : 'transform 0.2s',
+            }}
+            draggable={false}
+          />
+        )}
       </div>
       <button
         className="fullscreen-btn"
@@ -128,12 +142,14 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
       >
         {isFullscreen ? '\u2716' : '\u26F6'}
       </button>
-      <ZoomControls
-        scale={scale}
-        onZoomIn={handleZoomIn}
-        onZoomOut={handleZoomOut}
-        onReset={handleReset}
-      />
+      {!video && (
+        <ZoomControls
+          scale={scale}
+          onZoomIn={handleZoomIn}
+          onZoomOut={handleZoomOut}
+          onReset={handleReset}
+        />
+      )}
     </div>
   );
 });

@@ -6,6 +6,7 @@ from typing import Optional
 
 from sqlalchemy.orm import Session
 
+from config import is_video_extension
 from models.photo import Photo
 from services.exif import extract_image_info
 
@@ -128,6 +129,10 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
             norm_key = os.path.normcase(db_path)
             existing_paths.add(norm_key)
 
+            fname = os.path.basename(fpath)
+            ext = os.path.splitext(fname)[1].lower().lstrip(".")
+            is_video = is_video_extension(ext)
+
             try:
                 stat = os.stat(fpath)
                 file_size = stat.st_size
@@ -141,8 +146,9 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
                         # Unchanged — skip entirely (no DB query needed)
                         unchanged += 1
                         continue
-                    # Modified — update existing record
-                    width, height, taken_at = extract_image_info(fpath)
+                    # Modified — update existing record.
+                    # Videos can't be opened by Pillow, so skip image metadata for them.
+                    width, height, taken_at = (None, None, None) if is_video else extract_image_info(fpath)
                     db.query(Photo).filter(Photo.id == cached_id).update({
                         "file_size": file_size,
                         "modified_at": modified_at,
@@ -154,9 +160,7 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
                 else:
                     # New photo
                     created_at = datetime.fromtimestamp(stat.st_ctime).isoformat()
-                    width, height, taken_at = extract_image_info(fpath)
-                    fname = os.path.basename(fpath)
-                    ext = os.path.splitext(fname)[1].lower().lstrip(".")
+                    width, height, taken_at = (None, None, None) if is_video else extract_image_info(fpath)
 
                     photo = Photo(
                         file_path=db_path,

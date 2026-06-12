@@ -1,6 +1,7 @@
 import { useRef, useState, useEffect, useCallback, useImperativeHandle, forwardRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Photo } from '../../types';
 import { useTranslation } from '../../i18n/useTranslation';
+import { isVideo } from '../../utils/media';
 
 /** Per-image zoomable wrapper */
 function ZoomableImage({ photo, onClick }: { photo: Photo; onClick: () => void }) {
@@ -96,6 +97,20 @@ function ZoomableImage({ photo, onClick }: { photo: Photo; onClick: () => void }
           transition: isPanning ? 'none' : 'transform 0.2s',
         }}
         draggable={false}
+      />
+    </div>
+  );
+}
+
+/** Inline video player for the multi-preview panel */
+function PanelVideo({ photo }: { photo: Photo }) {
+  return (
+    <div className="zoomable-image-container">
+      <video
+        className="random-picks-video"
+        src={`/api/images/${photo.id}/full?v=${photo.modified_at}`}
+        controls
+        playsInline
       />
     </div>
   );
@@ -228,7 +243,11 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
             onDrop={(e) => handleDrop(e, index)}
             onDragEnd={handleDragEnd}
           >
-            <ZoomableImage photo={photo} onClick={() => onSelect(photo.id)} />
+            {isVideo(photo.extension) ? (
+              <PanelVideo photo={photo} />
+            ) : (
+              <ZoomableImage photo={photo} onClick={() => onSelect(photo.id)} />
+            )}
           </div>
         ))}
       </div>

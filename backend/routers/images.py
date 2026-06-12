@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from config import is_video_extension
 from database import get_db
 from models.photo import Photo
 from models.setting import Setting
@@ -34,6 +35,12 @@ def get_full_image(photo_id: int, db: Session = Depends(get_db)):
         "bmp": "image/bmp",
         "tiff": "image/tiff",
         "tif": "image/tiff",
+        "mp4": "video/mp4",
+        "m4v": "video/mp4",
+        "webm": "video/webm",
+        "ogg": "video/ogg",
+        "ogv": "video/ogg",
+        "mov": "video/quicktime",
     }
     media_type = media_type_map.get(photo.extension, "image/jpeg")
 
@@ -49,6 +56,11 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
     photo = db.query(Photo).filter(Photo.id == photo_id).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
+
+    # Videos have no Pillow-generatable thumbnail; the frontend renders a
+    # placeholder tile instead, so signal that none is available here.
+    if is_video_extension(photo.extension):
+        raise HTTPException(status_code=415, detail="No thumbnail for video")
 
     fpath = long_path(photo.file_path)
     if not os.path.isfile(fpath):
