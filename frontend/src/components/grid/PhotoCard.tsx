@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
-import { isVideo } from '../../utils/media';
+import { isVideo, formatDuration } from '../../utils/media';
 import type { Photo } from '../../types';
 
 interface PhotoCardProps {
@@ -49,9 +49,22 @@ export function PhotoCard({ photo }: PhotoCardProps) {
           />
         </div>
         {video ? (
-          <div className="photo-card-video-placeholder">
-            <span className="photo-card-play-icon">&#9654;</span>
-          </div>
+          <>
+            {failed ? (
+              <div className="photo-card-video-placeholder" />
+            ) : (
+              <img
+                src={photo.thumbnail_url}
+                alt={photo.file_name}
+                loading="lazy"
+                onError={() => setFailed(true)}
+              />
+            )}
+            <span className="photo-card-play-overlay">&#9654;</span>
+            {photo.duration != null && (
+              <span className="photo-card-duration">{formatDuration(photo.duration)}</span>
+            )}
+          </>
         ) : (
           <img
             src={photo.thumbnail_url}

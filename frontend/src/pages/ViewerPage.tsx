@@ -8,13 +8,14 @@ import { RandomPicksPanel } from '../components/viewer/RandomPicksPanel';
 import type { RandomPicksPanelHandle } from '../components/viewer/RandomPicksPanel';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useTranslation } from '../i18n/useTranslation';
+import { formatDuration } from '../utils/media';
 import type { Photo, NeighborsResponse, PhotoListResponse } from '../types';
 
 export function ViewerPage() {
   const { photoId } = useParams<{ photoId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, folderRoot, setSelectedFolderPath } = useAppStore();
+  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, folderRoot, setSelectedFolderPath } = useAppStore();
   const { t } = useTranslation();
 
   const [photo, setPhoto] = useState<Photo | null>(null);
@@ -50,6 +51,7 @@ export function ViewerPage() {
           neighborParams.set('folder_path', selectedFolderPath);
           neighborParams.set('include_subfolders', includeSubfolders ? 'true' : 'false');
         }
+        neighborParams.set('media_type', mediaFilter);
         const neighborsData = await api.get<NeighborsResponse>(`/photos/${id}/neighbors?${neighborParams}`);
         setNeighbors(neighborsData);
       }
@@ -58,7 +60,7 @@ export function ViewerPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, selectedFolderPath, includeSubfolders, navigate]);
+  }, [sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, navigate]);
 
   // Fetch photo data
   useEffect(() => {
@@ -85,11 +87,12 @@ export function ViewerPage() {
   const handleRandom = useCallback(async () => {
     const params = new URLSearchParams();
     if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
+    params.set('media_type', mediaFilter);
     try {
       const randomPhoto = await api.get<Photo>(`/photos/random?${params}`);
       navigate(`/viewer/${randomPhoto.id}`);
     } catch { /* no photos */ }
-  }, [selectedFolderPath, navigate]);
+  }, [selectedFolderPath, mediaFilter, navigate]);
 
   const handleRandomPicks = useCallback(async () => {
     if (!photo) return;
@@ -98,13 +101,14 @@ export function ViewerPage() {
       per_page: '5',
     });
     if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
+    params.set('media_type', mediaFilter);
     try {
       const res = await api.get<PhotoListResponse>(`/photos?${params}`);
       const picks = res.items.filter((p) => p.id !== photo.id).slice(0, 4);
       setRandomPicks(picks);
       setShowRandomPicks(true);
     } catch { /* ignore */ }
-  }, [photo, selectedFolderPath]);
+  }, [photo, selectedFolderPath, mediaFilter]);
 
   handleRandomPicksRef.current = handleRandomPicks;
 
@@ -230,6 +234,7 @@ export function ViewerPage() {
       <div className="viewer-bottom-bar">
         <div className="viewer-info">
           {photo.width && photo.height && <span>{photo.width}x{photo.height}</span>}
+          {photo.duration != null && <span>{formatDuration(photo.duration)}</span>}
           <span>{(photo.file_size / 1024 / 1024).toFixed(1)} MB</span>
           {photo.taken_at && <span>Taken: {new Date(photo.taken_at).toLocaleDateString()}</span>}
         </div>

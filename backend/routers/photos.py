@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from config import VIDEO_EXTENSIONS
 from database import get_db
 from models.photo import Photo
 from schemas.photo import PhotoResponse, PhotoListResponse, NeighborsResponse
@@ -24,6 +25,7 @@ def photo_to_response(photo: Photo) -> PhotoResponse:
         file_size=photo.file_size,
         width=photo.width,
         height=photo.height,
+        duration=photo.duration,
         created_at=photo.created_at,
         modified_at=photo.modified_at,
         taken_at=photo.taken_at,
@@ -37,10 +39,15 @@ def build_query(
     favorite_only: bool = False,
     folder_path: Optional[str] = None,
     include_subfolders: bool = True,
+    media_type: str = "all",
 ):
     query = db.query(Photo)
     if favorite_only:
         query = query.filter(Photo.is_favorite == 1)
+    if media_type == "photos":
+        query = query.filter(Photo.extension.notin_(VIDEO_EXTENSIONS))
+    elif media_type == "videos":
+        query = query.filter(Photo.extension.in_(VIDEO_EXTENSIONS))
     if folder_path is not None:
         prefix = os.path.normpath(folder_path)
         if not prefix.endswith(os.sep):
@@ -61,9 +68,10 @@ def get_photos(
     favorite_only: bool = Query(False),
     folder_path: Optional[str] = Query(None),
     include_subfolders: bool = Query(True),
+    media_type: str = Query("all"),
     db: Session = Depends(get_db),
 ):
-    query = build_query(db, favorite_only, folder_path, include_subfolders)
+    query = build_query(db, favorite_only, folder_path, include_subfolders, media_type)
     total = query.count()
 
     sort_column_map = {
@@ -99,9 +107,10 @@ def get_random_photo(
     favorite_only: bool = Query(False),
     folder_path: Optional[str] = Query(None),
     include_subfolders: bool = Query(True),
+    media_type: str = Query("all"),
     db: Session = Depends(get_db),
 ):
-    query = build_query(db, favorite_only, folder_path, include_subfolders)
+    query = build_query(db, favorite_only, folder_path, include_subfolders, media_type)
     photo = query.order_by(func.random()).first()
     if not photo:
         raise HTTPException(status_code=404, detail="No photos found")
@@ -124,6 +133,7 @@ def get_neighbors(
     favorite_only: bool = Query(False),
     folder_path: Optional[str] = Query(None),
     include_subfolders: bool = Query(True),
+    media_type: str = Query("all"),
     db: Session = Depends(get_db),
 ):
     sort_column_map = {
@@ -138,7 +148,7 @@ def get_neighbors(
     if not current:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    base_query = build_query(db, favorite_only, folder_path, include_subfolders)
+    base_query = build_query(db, favorite_only, folder_path, include_subfolders, media_type)
     current_val = getattr(current, sort_by if sort_by in sort_column_map else "created_at")
 
     if sort_order == "desc":

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Photo, SortBy, SortOrder, ScanStatus, FolderNode } from '../types';
+import type { Photo, SortBy, SortOrder, MediaFilter, ScanStatus, FolderNode } from '../types';
 
 interface AppState {
   // Photos
@@ -34,6 +34,7 @@ interface AppState {
   folderRoot: string;
   selectedFolderPath: string | null;
   includeSubfolders: boolean;
+  mediaFilter: MediaFilter;
   isSidebarOpen: boolean;
 
   // Actions
@@ -51,6 +52,7 @@ interface AppState {
   setFolderTree: (root: string, folders: FolderNode[]) => void;
   setSelectedFolderPath: (path: string | null) => void;
   setIncludeSubfolders: (include: boolean) => void;
+  setMediaFilter: (filter: MediaFilter) => void;
   setIsSidebarOpen: (open: boolean) => void;
   togglePhotoSelection: (photo: Photo) => void;
   clearPhotoSelection: () => void;
@@ -83,6 +85,7 @@ export const useAppStore = create<AppState>((set) => ({
   folderRoot: '',
   selectedFolderPath: null,
   includeSubfolders: localStorage.getItem('include_subfolders') !== '0',
+  mediaFilter: (localStorage.getItem('media_filter') as MediaFilter | null) ?? 'all',
   isSidebarOpen: true,
 
   setPhotos: (photos, total, page, perPage, totalPages) =>
@@ -111,6 +114,10 @@ export const useAppStore = create<AppState>((set) => ({
   setIncludeSubfolders: (includeSubfolders) => {
     localStorage.setItem('include_subfolders', includeSubfolders ? '1' : '0');
     set({ includeSubfolders, photos: [], page: 1 });
+  },
+  setMediaFilter: (mediaFilter) => {
+    localStorage.setItem('media_filter', mediaFilter);
+    set({ mediaFilter, photos: [], page: 1 });
   },
   setIsSidebarOpen: (isSidebarOpen) => set({ isSidebarOpen }),
   togglePhotoSelection: (photo) =>

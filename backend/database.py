@@ -30,9 +30,19 @@ def get_db():
         db.close()
 
 
+def _migrate_schema():
+    """Lightweight migrations for additive columns (no Alembic in this project)."""
+    from sqlalchemy import text
+    with engine.begin() as conn:
+        cols = {row[1] for row in conn.execute(text("PRAGMA table_info(photos)"))}
+        if "duration" not in cols:
+            conn.execute(text("ALTER TABLE photos ADD COLUMN duration REAL"))
+
+
 def init_db():
     import models  # noqa: F401
     Base.metadata.create_all(bind=engine)
+    _migrate_schema()
 
     db = SessionLocal()
     try:

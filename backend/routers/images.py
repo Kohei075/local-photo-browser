@@ -11,6 +11,7 @@ from database import get_db
 from models.photo import Photo
 from models.setting import Setting
 from services.thumbnail import generate_thumbnail
+from services.video import generate_video_thumbnail
 from services.pathutil import long_path
 
 router = APIRouter()
@@ -57,11 +58,6 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    # Videos have no Pillow-generatable thumbnail; the frontend renders a
-    # placeholder tile instead, so signal that none is available here.
-    if is_video_extension(photo.extension):
-        raise HTTPException(status_code=415, detail="No thumbnail for video")
-
     fpath = long_path(photo.file_path)
     if not os.path.isfile(fpath):
         raise HTTPException(status_code=404, detail="Image file not found on disk")
@@ -70,7 +66,11 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
     setting = db.query(Setting).filter(Setting.key == "thumbnail_size").first()
     max_size = int(setting.value) if setting else 300
 
-    thumb_path = generate_thumbnail(photo.id, fpath, max_size)
+    if is_video_extension(photo.extension):
+        # Poster frame via ffmpeg (uses the clean path; ffmpeg dislikes \\?\ prefixes).
+        thumb_path = generate_video_thumbnail(photo.id, photo.file_path, max_size)
+    else:
+        thumb_path = generate_thumbnail(photo.id, fpath, max_size)
     if not thumb_path or not os.path.isfile(thumb_path):
         raise HTTPException(status_code=500, detail="Failed to generate thumbnail")
 

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Text, Index
+from sqlalchemy import Column, Integer, Float, Text, Index
 
 from database import Base
 
@@ -13,6 +13,7 @@ class Photo(Base):
     file_size = Column(Integer, nullable=False)
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
+    duration = Column(Float, nullable=True)  # seconds; videos only
     created_at = Column(Text, nullable=False)
     modified_at = Column(Text, nullable=False)
     taken_at = Column(Text, nullable=True)

@@ -409,6 +409,15 @@ input:focus, select:focus {
   cursor: pointer;
 }
 
+.sidebar-media-filter {
+  display: block;
+  margin: 0 8px 8px;
+  padding: 4px 6px;
+  width: calc(100% - 16px);
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
 .folder-tree-root {
   padding: 6px 12px;
   font-size: 0.8rem;
@@ -755,16 +764,30 @@ input:focus, select:focus {
 .photo-card-video-placeholder {
   width: 100%;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
   background: var(--photo-bg);
 }
 
-.photo-card-play-icon {
-  font-size: 2.2rem;
-  color: rgba(255, 255, 255, 0.85);
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.6));
+.photo-card-play-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 2rem;
+  color: rgba(255, 255, 255, 0.9);
+  filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.7));
+  pointer-events: none;
+}
+
+.photo-card-duration {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  padding: 1px 5px;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 3px;
   pointer-events: none;
 }
 

@@ -30,6 +30,9 @@ const translations = {
   'sidebar.noResults': { ja: '結果なし', en: 'No results' },
   'sidebar.allPhotos': { ja: 'すべての写真', en: 'All Photos' },
   'sidebar.includeSubfolders': { ja: '配下フォルダの写真も表示', en: 'Include subfolders' },
+  'sidebar.mediaFilter.all': { ja: 'すべて', en: 'All' },
+  'sidebar.mediaFilter.photos': { ja: '写真のみ', en: 'Photos only' },
+  'sidebar.mediaFilter.videos': { ja: '動画のみ', en: 'Videos only' },
   'sidebar.noFolders': { ja: 'スキャン済みフォルダなし', en: 'No folders scanned' },
   'sidebar.collapseAll': { ja: 'すべて閉じる', en: 'Collapse All' },
 

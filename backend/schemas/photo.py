@@ -10,6 +10,7 @@ class PhotoResponse(BaseModel):
     file_size: int
     width: Optional[int] = None
     height: Optional[int] = None
+    duration: Optional[float] = None
     created_at: str
     modified_at: str
     taken_at: Optional[str] = None

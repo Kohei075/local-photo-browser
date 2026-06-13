@@ -6,6 +6,7 @@ export interface Photo {
   file_size: number;
   width: number | null;
   height: number | null;
+  duration: number | null;
   created_at: string;
   modified_at: string;
   taken_at: string | null;
@@ -42,6 +43,7 @@ export interface ScanStatus {
 
 export type SortBy = 'created_at' | 'modified_at' | 'taken_at' | 'file_name' | 'random';
 export type SortOrder = 'asc' | 'desc';
+export type MediaFilter = 'all' | 'photos' | 'videos';
 
 export interface FolderNode {
   name: string;

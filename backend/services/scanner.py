@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 from config import is_video_extension
 from models.photo import Photo
 from services.exif import extract_image_info
+from services.video import probe_video
 
 logger = logging.getLogger(__name__)
 
@@ -65,13 +66,15 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
             scan_status["is_scanning"] = False
             return
 
-        # Pre-build lookup of existing DB records: {normcase_path: (modified_at, file_size, id)}
-        all_db_photos = db.query(Photo.id, Photo.file_path, Photo.modified_at, Photo.file_size).all()
-        db_lookup: dict[str, tuple[str, int, int]] = {}
-        for pid, fp, mat, fsz in all_db_photos:
+        # Pre-build lookup of existing DB records: {normcase_path: (modified_at, file_size, id, duration)}
+        all_db_photos = db.query(
+            Photo.id, Photo.file_path, Photo.modified_at, Photo.file_size, Photo.duration
+        ).all()
+        db_lookup: dict[str, tuple[str, int, int, float | None]] = {}
+        for pid, fp, mat, fsz, dur in all_db_photos:
             norm = os.path.normcase(fp)
             if _is_in_target(norm):
-                db_lookup[norm] = (mat, fsz, pid)
+                db_lookup[norm] = (mat, fsz, pid, dur)
 
         # Collect all image files (use long path prefix for Windows long filename support)
         image_files: list[str] = []
@@ -141,26 +144,38 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
                 cached = db_lookup.get(norm_key)
 
                 if cached:
-                    cached_mat, cached_fsz, cached_id = cached
-                    if cached_mat == modified_at and cached_fsz == file_size:
+                    cached_mat, cached_fsz, cached_id, cached_dur = cached
+                    # Re-probe videos that are missing duration (e.g. scanned before
+                    # video metadata support existed), even if otherwise unchanged.
+                    metadata_complete = (not is_video) or (cached_dur is not None)
+                    if cached_mat == modified_at and cached_fsz == file_size and metadata_complete:
                         # Unchanged — skip entirely (no DB query needed)
                         unchanged += 1
                         continue
+
+                # Extract metadata (only for new or modified files).
+                # Videos can't be opened by Pillow — probe with ffmpeg instead.
+                if is_video:
+                    width, height, duration = probe_video(fpath)
+                    taken_at = None
+                else:
+                    width, height, taken_at = extract_image_info(fpath)
+                    duration = None
+
+                if cached:
                     # Modified — update existing record.
-                    # Videos can't be opened by Pillow, so skip image metadata for them.
-                    width, height, taken_at = (None, None, None) if is_video else extract_image_info(fpath)
                     db.query(Photo).filter(Photo.id == cached_id).update({
                         "file_size": file_size,
                         "modified_at": modified_at,
                         "width": width,
                         "height": height,
+                        "duration": duration,
                         "taken_at": taken_at,
                         "scanned_at": now,
                     })
                 else:
                     # New photo
                     created_at = datetime.fromtimestamp(stat.st_ctime).isoformat()
-                    width, height, taken_at = (None, None, None) if is_video else extract_image_info(fpath)
 
                     photo = Photo(
                         file_path=db_path,
@@ -169,6 +184,7 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
                         file_size=file_size,
                         width=width,
                         height=height,
+                        duration=duration,
                         created_at=created_at,
                         modified_at=modified_at,
                         taken_at=taken_at,
@@ -204,7 +220,7 @@ def scan_folder(root_folder: str, extensions: set[str], db: Session,
         # Remove photos whose files no longer exist on disk
         # When target_folders is set, only consider photos within those folders
         removed_ids = [
-            pid for norm_path, (_, _, pid) in db_lookup.items()
+            pid for norm_path, (_, _, pid, _) in db_lookup.items()
             if norm_path not in existing_paths and _is_in_target(norm_path)
         ]
         if removed_ids:

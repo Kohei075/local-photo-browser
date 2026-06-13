@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../api/client';
 import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import type { FolderTreeResponse, SearchResponse, FolderNode } from '../../types';
+import type { FolderTreeResponse, SearchResponse, FolderNode, MediaFilter } from '../../types';
 
 function FolderTreeItem({ node, depth, onSelect, expandToPath, collapseKey }: {
   node: FolderNode; depth: number; onSelect: (path: string | null) => void; expandToPath: string | null; collapseKey: number;
@@ -77,7 +77,7 @@ function getSavedWidth(): number {
 }
 
 export function FolderSidebar() {
-  const { folderTree, folderRoot, setFolderTree, selectedFolderPath, setSelectedFolderPath, includeSubfolders, setIncludeSubfolders, isSidebarOpen, setIsSidebarOpen } = useAppStore();
+  const { folderTree, folderRoot, setFolderTree, selectedFolderPath, setSelectedFolderPath, includeSubfolders, setIncludeSubfolders, mediaFilter, setMediaFilter, isSidebarOpen, setIsSidebarOpen } = useAppStore();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResponse['results']>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -233,6 +233,15 @@ export function FolderSidebar() {
             />
             <span>{t('sidebar.includeSubfolders')}</span>
           </label>
+          <select
+            className="sidebar-media-filter"
+            value={mediaFilter}
+            onChange={(e) => setMediaFilter(e.target.value as MediaFilter)}
+          >
+            <option value="all">{t('sidebar.mediaFilter.all')}</option>
+            <option value="photos">{t('sidebar.mediaFilter.photos')}</option>
+            <option value="videos">{t('sidebar.mediaFilter.videos')}</option>
+          </select>
           {folderRoot && (
             <div className="folder-tree-root" title={folderRoot}>
               {folderRoot.split(/[/\\]/).pop() || folderRoot}
