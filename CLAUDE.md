@@ -4,11 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## プロジェクト概要
 
-ローカルフォルダの画像をスキャンし、サムネイル生成・ギャラリー表示・ビューア・お気に入り・タグ付け・フォルダナビゲーションを提供するWebアプリ。Windows向けだがクロスプラットフォーム対応。日本語/英語バイリンガル。
+ローカルフォルダの画像・動画をスキャンし、サムネイル/ポスターフレーム生成・ギャラリー表示・ビューア（画像表示／動画再生）・お気に入り・タグ付け・フォルダナビゲーションを提供するWebアプリ。Windows向けだがクロスプラットフォーム対応。日本語/英語バイリンガル。
 
 ## 技術スタック
 
-- **バックエンド:** Python 3.10+ / FastAPI / SQLAlchemy 2.0 (同期) / SQLite (WALモード) / Pillow
+- **バックエンド:** Python 3.10+ / FastAPI / SQLAlchemy 2.0 (同期) / SQLite (WALモード) / Pillow / imageio-ffmpeg (動画のポスターフレーム生成・解像度/再生時間取得)
 - **フロントエンド:** React 19 / TypeScript 5.7 (strict) / Vite 6 / Zustand 5 / React Router 7
 - **テストスイート・リンター/フォーマッターは未導入**
 
@@ -37,10 +37,10 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 
 `main.py` にFastAPIアプリ。全APIルートは `/api` プレフィックス配下。本番ではさらに `frontend/dist/` を配信しSPAフォールバック対応。
 
-- **ルーター:** `photos`, `images`, `favorites`, `tags`, `scan`, `settings`, `folders` — 各 `routers/` 内
-- **モデル:** SQLAlchemy ORM (`models/`) — `photos`, `person_tags`, `photo_persons` (中間テーブル), `settings` (キーバリュー)
-- **サービス:** `scanner.py` (バックグラウンドフォルダスキャン、差分検出、100件ごとバッチコミット), `thumbnail.py` (オンデマンド生成、`data/thumbnails/` にキャッシュ), `exif.py`, `pathutil.py` (Windows `\\?\` ロングパス対応)
-- **データ:** SQLite DB + サムネイルキャッシュは `backend/data/` に自動生成
+- **ルーター:** `photos`, `images` (画像/動画配信・サムネ・スクリーンショット保存), `favorites`, `tags`, `scan`, `settings`, `folders` — 各 `routers/` 内
+- **モデル:** SQLAlchemy ORM (`models/`) — `photos` (動画は `duration` 等を保持), `person_tags`, `photo_persons` (中間テーブル), `settings` (キーバリュー)
+- **サービス:** `scanner.py` (バックグラウンドフォルダスキャン、差分検出、100件ごとバッチコミット), `thumbnail.py` (画像サムネのオンデマンド生成、`data/thumbnails/` にキャッシュ), `video.py` (ffmpeg=imageio-ffmpeg同梱バイナリでポスターフレーム生成・解像度/再生時間取得), `exif.py`, `pathutil.py` (Windows `\\?\` ロングパス対応)
+- **データ:** SQLite DB + サムネイル/ポスターフレームのキャッシュは `backend/data/` に自動生成
 
 スキャナーは `BackgroundTask` として実行。進捗はインメモリのdictで管理し、フロントエンドからポーリングで取得。
 
@@ -48,9 +48,9 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 
 3つのルート: `/` (グリッド), `/viewer/:photoId` (単体ビューア), `/settings`
 
-- **状態管理:** 単一のZustandストア (`stores/appStore.ts`) — 写真リスト、ページネーション、ソート/フィルター、スキャン状態、フォルダツリー
+- **状態管理:** 単一のZustandストア (`stores/appStore.ts`) — 写真リスト、ページネーション、ソート/フィルター、メディア種別フィルター (`mediaFilter`)、配下フォルダ表示 (`includeSubfolders`)、直前に開いた写真 (`lastViewedPhotoId`)、スキャン状態、フォルダツリー
 - **APIクライアント:** `api/client.ts` のfetchラッパー (型付きジェネリクス)。開発時はViteプロキシで `/api/*` → `:8000` に転送
-- **カスタムフック:** `usePhotos` (取得+無限スクロール), `useSettings`, `useFavorite`, `useKeyboardNav`
+- **カスタムフック:** `usePhotos` (取得+無限スクロール), `useSettings`, `useFavorite`, `useKeyboardNav`, `useScreenshot` (全画面のスクリーンショット保存)
 - **i18n:** `i18n/` の軽量自作システム — `translations.ts` の辞書 + `useSyncExternalStore` フック。Contextプロバイダー不要
 - **グリッド:** `IntersectionObserver` ベースの無限スクロール、ページサイズ50件
 
@@ -61,3 +61,8 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 - 設定はDBの `settings` テーブルにキーバリュー形式で保存（設定ファイルではない）
 - サムネイルは初回リクエスト時に生成し、JPEG としてディスクにキャッシュ
 - OSフォルダ選択ダイアログは `tkinter` を使いFastAPIエンドポイントから呼び出し
+- **動画対応:** 拡張子判定は `config.py` の `VIDEO_EXTENSIONS`（フロントは `utils/media.ts`）。動画は `<video>` で再生し、グリッド/ビューアにポスターフレームと再生時間を表示。`photos.duration` カラムは `init_db` の軽量マイグレーション（`PRAGMA table_info` + `ALTER TABLE`）で追加
+- **スキャン対象拡張子:** `config.SUPPORTED_EXTENSIONS`（画像+動画）を信頼源とし、`init_db` で `settings.extensions` に同期（拡張子入力欄はUIから廃止済み）
+- **メディア種別フィルター:** サイドバーのプルダウン（すべて/写真のみ/動画のみ）→ `media_type` クエリで `/photos`・`/photos/random`・`neighbors` を絞り込み
+- **スクリーンショット:** 全画面ビューアのカメラボタンで、表示中のメディア要素を `utils/capture.ts` がcanvasに描画（UIやブラウザクロームは写り込まない／拡大時はコンテナ枠でクリップ）し、`POST /api/screenshot` でPNGを設定の `screenshot_folder` に保存
+- **閲覧位置の復元:** 写真クリック時に `lastViewedPhotoId` を記録し、グリッド復帰時に `scrollIntoView` で復元
