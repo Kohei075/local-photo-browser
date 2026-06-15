@@ -4,6 +4,7 @@ import sys
 
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import FileResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from config import is_video_extension
@@ -106,3 +107,39 @@ def reveal_in_explorer(photo_id: int, db: Session = Depends(get_db)):
         subprocess.Popen(["xdg-open", folder])
 
     return {"message": "OK"}
+
+
+class ScreenshotRequest(BaseModel):
+    image: str  # PNG data URL (data:image/png;base64,...) or raw base64
+
+
+@router.post("/screenshot")
+def take_screenshot(req: ScreenshotRequest, db: Session = Depends(get_db)):
+    """Save a client-captured PNG to the configured screenshot folder."""
+    import base64
+    from datetime import datetime
+
+    setting = db.query(Setting).filter(Setting.key == "screenshot_folder").first()
+    folder = (setting.value if setting else "").strip()
+    if not folder:
+        raise HTTPException(status_code=400, detail="screenshot_folder_not_set")
+    if not os.path.isdir(folder):
+        raise HTTPException(status_code=400, detail="screenshot_folder_not_found")
+
+    data = req.image
+    if "," in data:
+        data = data.split(",", 1)[1]
+    try:
+        raw = base64.b64decode(data)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid image data")
+
+    file_name = f"screenshot_{datetime.now().strftime('%Y%m%d_%H%M%S')}.png"
+    save_path = os.path.join(folder, file_name)
+    try:
+        with open(save_path, "wb") as f:
+            f.write(raw)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to save screenshot: {e}")
+
+    return {"saved": True, "path": save_path, "file_name": file_name}

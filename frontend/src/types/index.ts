@@ -31,6 +31,7 @@ export interface Settings {
   root_folder: string;
   extensions: string;
   thumbnail_size: string;
+  screenshot_folder: string;
 }
 
 export interface ScanStatus {

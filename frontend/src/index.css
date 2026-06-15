@@ -920,9 +920,9 @@ input:focus, select:focus {
 }
 
 .photo-viewer-container img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   user-select: none;
 }
 
@@ -985,6 +985,32 @@ input:focus, select:focus {
 
 .fullscreen-btn:hover {
   background: rgba(42, 36, 32, 0.9);
+}
+
+.screenshot-btn {
+  position: absolute;
+  top: 12px;
+  right: 56px;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--photo-overlay);
+  color: var(--text-on-primary);
+  border-radius: var(--radius-sm);
+  z-index: 10;
+  backdrop-filter: blur(8px);
+  transition: background 0.2s ease;
+}
+
+.screenshot-btn:hover:not(:disabled) {
+  background: rgba(42, 36, 32, 0.9);
+}
+
+.screenshot-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .photo-viewer:fullscreen {
@@ -1066,10 +1092,25 @@ input:focus, select:focus {
   color: var(--text-muted);
 }
 
+.random-picks-screenshot-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
 .random-picks-fullscreen-btn:hover,
-.random-picks-close:hover {
+.random-picks-close:hover,
+.random-picks-screenshot-btn:hover:not(:disabled) {
   background: var(--bg-card);
   color: var(--text);
+}
+
+.random-picks-screenshot-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .random-picks-grid {

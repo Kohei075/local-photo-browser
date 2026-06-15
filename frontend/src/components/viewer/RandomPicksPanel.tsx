@@ -1,7 +1,9 @@
 import { useRef, useState, useEffect, useCallback, useImperativeHandle, forwardRef, type PointerEvent as ReactPointerEvent } from 'react';
 import type { Photo } from '../../types';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useScreenshot } from '../../hooks/useScreenshot';
 import { isVideo } from '../../utils/media';
+import { ScreenshotButton } from './ScreenshotButton';
 
 /** Per-image zoomable wrapper */
 function ZoomableImage({ photo, onClick }: { photo: Photo; onClick: () => void }) {
@@ -11,13 +13,16 @@ function ZoomableImage({ photo, onClick }: { photo: Photo; onClick: () => void }
   const panStart = useRef({ x: 0, y: 0 });
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleZoomIn = useCallback(() => {
-    setScale((s) => Math.min(s * 1.3, 5));
+  // Finer step for the wheel so zoom can be adjusted gradually.
+  const WHEEL_ZOOM_STEP = 1.08;
+
+  const zoomBy = useCallback((factor: number) => {
+    setScale((s) => Math.min(s * factor, 5));
   }, []);
 
-  const handleZoomOut = useCallback(() => {
+  const zoomOutBy = useCallback((factor: number) => {
     setScale((s) => {
-      const next = s / 1.3;
+      const next = s / factor;
       if (next <= 1) {
         setPosition({ x: 0, y: 0 });
         return 1;
@@ -33,12 +38,12 @@ function ZoomableImage({ photo, onClick }: { photo: Photo; onClick: () => void }
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      if (e.deltaY < 0) handleZoomIn();
-      else handleZoomOut();
+      if (e.deltaY < 0) zoomBy(WHEEL_ZOOM_STEP);
+      else zoomOutBy(WHEEL_ZOOM_STEP);
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [handleZoomIn, handleZoomOut]);
+  }, [zoomBy, zoomOutBy]);
 
   const handlePointerDown = useCallback((e: ReactPointerEvent) => {
     if (scale > 1) {
@@ -135,6 +140,7 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const { t } = useTranslation();
+  const { capture, capturing } = useScreenshot();
 
   // Sync when parent photos change (e.g. shuffle)
   useEffect(() => {
@@ -214,6 +220,7 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
         >
           &#9783;
         </button>
+        {isFullscreen && <ScreenshotButton className="random-picks-screenshot-btn" onClick={() => capture(panelRef.current)} disabled={capturing} />}
         <button
           className="random-picks-fullscreen-btn"
           onClick={toggleFullscreen}

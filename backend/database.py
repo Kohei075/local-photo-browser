@@ -54,6 +54,7 @@ def init_db():
             "root_folder": "",
             "extensions": supported_ext,
             "thumbnail_size": "300",
+            "screenshot_folder": "",
         }
         for key, value in defaults.items():
             existing = db.query(Setting).filter(Setting.key == key).first()

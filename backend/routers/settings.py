@@ -32,6 +32,10 @@ def update_settings(data: SettingsUpdate, db: Session = Depends(get_db)):
         if not os.path.isdir(data.root_folder.strip()):
             raise HTTPException(status_code=400, detail="Folder not found")
 
+    if data.screenshot_folder is not None and data.screenshot_folder.strip():
+        if not os.path.isdir(data.screenshot_folder.strip()):
+            raise HTTPException(status_code=400, detail="Folder not found")
+
     now = datetime.now().isoformat()
 
     # Clear excluded folders when root_folder changes

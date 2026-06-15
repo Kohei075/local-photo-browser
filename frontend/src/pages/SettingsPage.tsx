@@ -24,6 +24,13 @@ export function SettingsPage() {
         onSave={(folder) => updateSettings({ root_folder: folder })}
       />
 
+      <FolderSetting
+        currentFolder={settings.screenshot_folder}
+        onSave={(folder) => updateSettings({ screenshot_folder: folder })}
+        title={t('settings.screenshotFolder')}
+        label={t('settings.screenshotFolderPath')}
+      />
+
       <FolderSelectTree rootFolder={settings.root_folder} extensions={settings.extensions} />
 
       <ScanButton

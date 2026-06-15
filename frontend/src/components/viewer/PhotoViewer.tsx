@@ -1,7 +1,9 @@
 import { useState, useRef, useCallback, useEffect, useImperativeHandle, forwardRef } from 'react';
 import type { Photo } from '../../types';
 import { ZoomControls } from './ZoomControls';
+import { ScreenshotButton } from './ScreenshotButton';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useScreenshot } from '../../hooks/useScreenshot';
 import { isVideo } from '../../utils/media';
 
 interface PhotoViewerProps {
@@ -21,15 +23,20 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
   const containerRef = useRef<HTMLDivElement>(null);
   const viewerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation();
+  const { capture, capturing } = useScreenshot();
   const video = isVideo(photo.extension);
 
-  const handleZoomIn = useCallback(() => {
-    setScale((s) => Math.min(s * 1.3, 5));
+  // Step factors: buttons jump in larger increments, the wheel is finer-grained.
+  const BUTTON_ZOOM_STEP = 1.3;
+  const WHEEL_ZOOM_STEP = 1.08;
+
+  const zoomBy = useCallback((factor: number) => {
+    setScale((s) => Math.min(s * factor, 5));
   }, []);
 
-  const handleZoomOut = useCallback(() => {
+  const zoomOutBy = useCallback((factor: number) => {
     setScale((s) => {
-      const newScale = s / 1.3;
+      const newScale = s / factor;
       if (newScale <= 1) {
         setPosition({ x: 0, y: 0 });
         return 1;
@@ -37,6 +44,9 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
       return newScale;
     });
   }, []);
+
+  const handleZoomIn = useCallback(() => zoomBy(BUTTON_ZOOM_STEP), [zoomBy]);
+  const handleZoomOut = useCallback(() => zoomOutBy(BUTTON_ZOOM_STEP), [zoomOutBy]);
 
   const handleReset = useCallback(() => {
     setScale(1);
@@ -50,12 +60,12 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
     if (!container) return;
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      if (e.deltaY < 0) handleZoomIn();
-      else handleZoomOut();
+      if (e.deltaY < 0) zoomBy(WHEEL_ZOOM_STEP);
+      else zoomOutBy(WHEEL_ZOOM_STEP);
     };
     container.addEventListener('wheel', onWheel, { passive: false });
     return () => container.removeEventListener('wheel', onWheel);
-  }, [handleZoomIn, handleZoomOut, video]);
+  }, [zoomBy, zoomOutBy, video]);
 
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
     if (scale > 1) {
@@ -135,6 +145,7 @@ export const PhotoViewer = forwardRef<PhotoViewerHandle, PhotoViewerProps>(funct
           />
         )}
       </div>
+      {isFullscreen && <ScreenshotButton className="screenshot-btn" onClick={() => capture(viewerRef.current)} disabled={capturing} />}
       <button
         className="fullscreen-btn"
         onClick={toggleFullscreen}

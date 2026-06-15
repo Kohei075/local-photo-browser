@@ -5,9 +5,12 @@ import { useTranslation } from '../../i18n/useTranslation';
 interface FolderSettingProps {
   currentFolder: string;
   onSave: (folder: string) => Promise<unknown>;
+  title?: string;
+  label?: string;
+  placeholder?: string;
 }
 
-export function FolderSetting({ currentFolder, onSave }: FolderSettingProps) {
+export function FolderSetting({ currentFolder, onSave, title, label, placeholder }: FolderSettingProps) {
   const [folder, setFolder] = useState(currentFolder);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
@@ -44,14 +47,14 @@ export function FolderSetting({ currentFolder, onSave }: FolderSettingProps) {
 
   return (
     <div className="setting-section">
-      <h3>{t('settings.photoFolder')}</h3>
+      <h3>{title ?? t('settings.photoFolder')}</h3>
       <div className="setting-row">
-        <label>{t('settings.rootFolder')}</label>
+        <label>{label ?? t('settings.rootFolder')}</label>
         <input
           type="text"
           value={folder}
           onChange={(e) => { setFolder(e.target.value); setError(''); }}
-          placeholder="e.g., C:\Users\Photos"
+          placeholder={placeholder ?? 'e.g., C:\\Users\\Photos'}
           className="setting-input setting-input-path"
         />
         <button className="btn btn-sm" onClick={handleBrowse} disabled={picking}>
