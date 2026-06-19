@@ -37,12 +37,12 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 
 `main.py` にFastAPIアプリ。全APIルートは `/api` プレフィックス配下。本番ではさらに `frontend/dist/` を配信しSPAフォールバック対応。
 
-- **ルーター:** `photos`, `images` (画像/動画配信・サムネ・スクリーンショット保存), `favorites`, `tags`, `scan`, `settings`, `folders` — 各 `routers/` 内
+- **ルーター:** `photos`, `images` (画像/動画配信・サムネ・スクリーンショット保存), `favorites`, `tags`, `scan` (フルスキャン・部分再スキャン・フォルダ単位削除＋各進捗), `settings`, `folders` (ツリー＋スキャン済み判定) — 各 `routers/` 内
 - **モデル:** SQLAlchemy ORM (`models/`) — `photos` (動画は `duration` 等を保持), `person_tags`, `photo_persons` (中間テーブル), `settings` (キーバリュー)
 - **サービス:** `scanner.py` (バックグラウンドフォルダスキャン、差分検出、100件ごとバッチコミット), `thumbnail.py` (画像サムネのオンデマンド生成、`data/thumbnails/` にキャッシュ), `video.py` (ffmpeg=imageio-ffmpeg同梱バイナリでポスターフレーム生成・解像度/再生時間取得), `exif.py`, `pathutil.py` (Windows `\\?\` ロングパス対応)
 - **データ:** SQLite DB + サムネイル/ポスターフレームのキャッシュは `backend/data/` に自動生成
 
-スキャナーは `BackgroundTask` として実行。進捗はインメモリのdictで管理し、フロントエンドからポーリングで取得。
+スキャナーは `BackgroundTask` として実行。進捗はインメモリのdict (`scan_status`) で管理し、フロントエンドからポーリングで取得。フォルダ単位削除も同様に `BackgroundTask` + `delete_status` で進捗管理する。
 
 ### フロントエンド (`frontend/src/`)
 
@@ -66,3 +66,6 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 - **メディア種別フィルター:** サイドバーのプルダウン（すべて/写真のみ/動画のみ）→ `media_type` クエリで `/photos`・`/photos/random`・`neighbors` を絞り込み
 - **スクリーンショット:** 全画面ビューアのカメラボタンで、表示中のメディア要素を `utils/capture.ts` がcanvasに描画（UIやブラウザクロームは写り込まない／拡大時はコンテナ枠でクリップ）し、`POST /api/screenshot` でPNGを設定の `screenshot_folder` に保存
 - **閲覧位置の復元:** 写真クリック時に `lastViewedPhotoId` を記録し、グリッド復帰時に `scrollIntoView` で復元
+- **フォルダ単位のデータ削除:** `FolderSelectTree` の各フォルダ行のゴミ箱で `POST /api/scan/delete-folders`（`BackgroundTask`）を実行。正規化パス前方一致（SQL LIKEではない＝`_`の誤爆回避）で対象を特定し、Photoレコードと `data/thumbnails/` のキャッシュのみ削除（ファイル本体は残す）。チェック状態依存の一括削除は事故防止のため廃止
+- **スキャン済み表示:** `/folders/browse` が各ノードに `scanned`（配下にPhotoがあるか）を付与し、ツリーにバッジ表示。バッジ＋ゴミ箱はスキャン済みフォルダにのみ表示
+- **進捗バー:** スキャン (`scan_status`)・再スキャン・削除 (`delete_status`) は進捗をポーリングし、共通の `.scan-progress` UIで表示
