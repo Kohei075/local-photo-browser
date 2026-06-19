@@ -92,6 +92,12 @@ const translations = {
   'settings.rescanSelected': { ja: '選択したフォルダのみを再スキャン', en: 'Rescan Selected Folders' },
   'settings.rescanning': { ja: '再スキャン中...', en: 'Rescanning...' },
   'settings.rescanComplete': { ja: '再スキャン完了: {count}件処理しました', en: 'Rescan complete: {count} files processed' },
+  'settings.scanned': { ja: 'スキャン済み', en: 'Scanned' },
+  'settings.deleteFolderData': { ja: 'このフォルダのスキャンデータを削除', en: "Delete this folder's scanned data" },
+  'settings.deleteFolderHint': { ja: '各フォルダのゴミ箱アイコンを押すと、そのフォルダ内のスキャン済みデータのみを削除します（ディスク上のファイル本体は削除されません）。', en: 'Click a folder’s trash icon to remove only the scanned data within that folder (the actual files on disk are not deleted).' },
+  'settings.deleteConfirm': { ja: '「{path}」内のスキャン済みデータを削除します。よろしいですか？（ファイル本体は削除されません）', en: 'Delete scanned data within "{path}"? (The actual files are not deleted.)' },
+  'settings.deleteComplete': { ja: '{count}件のデータを削除しました', en: 'Deleted {count} items' },
+  'settings.deleteProgress': { ja: '削除中: {processed} / {total}', en: 'Deleting: {processed} / {total}' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { api } from '../../api/client';
 import { useTranslation } from '../../i18n/useTranslation';
+import { usePhotos } from '../../hooks/usePhotos';
 import type { FolderNode } from '../../types';
 
 interface FolderSelectTreeProps {
@@ -29,17 +30,22 @@ function FolderCheckItem({
   ancestors,
   excluded,
   onToggle,
+  onDeleteFolder,
+  deleteDisabled,
 }: {
   node: FolderNode;
   depth: number;
   ancestors: string[];
   excluded: Set<string>;
   onToggle: (node: FolderNode, ancestors: string[]) => void;
+  onDeleteFolder: (path: string) => void;
+  deleteDisabled: boolean;
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const hasChildren = node.children.length > 0;
   const checkState = getCheckState(node, excluded);
   const checkboxRef = useRef<HTMLInputElement>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (checkboxRef.current) {
@@ -75,6 +81,24 @@ function FolderCheckItem({
         <span className="folder-check-name" title={node.path}>
           {node.name}
         </span>
+        {node.scanned && (
+          <>
+            <span className="folder-scanned-badge">{t('settings.scanned')}</span>
+            <button
+              className="folder-delete-btn"
+              onClick={() => onDeleteFolder(node.path)}
+              disabled={deleteDisabled}
+              title={t('settings.deleteFolderData')}
+              aria-label={t('settings.deleteFolderData')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2m2 0v14a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+              </svg>
+            </button>
+          </>
+        )}
       </div>
       {isOpen &&
         hasChildren &&
@@ -86,6 +110,8 @@ function FolderCheckItem({
             ancestors={childAncestors}
             excluded={excluded}
             onToggle={onToggle}
+            onDeleteFolder={onDeleteFolder}
+            deleteDisabled={deleteDisabled}
           />
         ))}
     </div>
@@ -106,9 +132,14 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [rescanning, setRescanning] = useState(false);
+  const [rescanProgress, setRescanProgress] = useState<{ processed: number; total: number } | null>(null);
   const [rescanResult, setRescanResult] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteProgress, setDeleteProgress] = useState<{ processed: number; total: number } | null>(null);
+  const [deleteResult, setDeleteResult] = useState<string | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
   const { t } = useTranslation();
+  const { fetchPhotos } = usePhotos();
 
   useEffect(() => {
     return () => {
@@ -179,6 +210,7 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
     if (targets.length === 0) return;
 
     setRescanning(true);
+    setRescanProgress(null);
     setRescanResult(null);
     try {
       await api.post('/scan/partial', { folders: targets });
@@ -189,10 +221,12 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
           processed: number;
           total: number;
         }>('/scan/status');
+        setRescanProgress({ processed: status.processed, total: status.total });
         if (status.is_scanning) {
-          pollTimerRef.current = setTimeout(poll, 1000);
+          pollTimerRef.current = setTimeout(poll, 500);
         } else {
           setRescanning(false);
+          setRescanProgress(null);
           setRescanResult(
             t('settings.rescanComplete', { count: status.processed }),
           );
@@ -203,6 +237,39 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
       pollTimerRef.current = setTimeout(poll, 500);
     } catch {
       setRescanning(false);
+    }
+  };
+
+  const handleDeleteFolder = async (path: string) => {
+    if (deleting || rescanning) return;
+    if (!window.confirm(t('settings.deleteConfirm', { path }))) return;
+
+    setDeleting(true);
+    setDeleteProgress(null);
+    setDeleteResult(null);
+    try {
+      await api.post('/scan/delete-folders', { folders: [path] });
+      const poll = async () => {
+        const status = await api.get<{
+          is_deleting: boolean;
+          processed: number;
+          total: number;
+        }>('/scan/delete-status');
+        setDeleteProgress({ processed: status.processed, total: status.total });
+        if (status.is_deleting) {
+          pollTimerRef.current = setTimeout(poll, 500);
+        } else {
+          setDeleting(false);
+          setDeleteResult(t('settings.deleteComplete', { count: status.total }));
+          setDeleteProgress(null);
+          // Refresh the gallery so removed photos disappear
+          fetchPhotos(1, false);
+          pollTimerRef.current = setTimeout(() => setDeleteResult(null), 5000);
+        }
+      };
+      pollTimerRef.current = setTimeout(poll, 300);
+    } catch {
+      setDeleting(false);
     }
   };
 
@@ -247,6 +314,8 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
             ancestors={[]}
             excluded={excluded}
             onToggle={toggleFolder}
+            onDeleteFolder={handleDeleteFolder}
+            deleteDisabled={deleting || rescanning}
           />
         ))}
       </div>
@@ -261,13 +330,46 @@ export function FolderSelectTree({ rootFolder, extensions }: FolderSelectTreePro
         <button
           className="btn btn-sm"
           onClick={handleRescan}
-          disabled={rescanning}
+          disabled={rescanning || deleting}
         >
           {rescanning ? t('settings.rescanning') : t('settings.rescanSelected')}
         </button>
         {saved && <span className="success-text">{t('settings.saved')}</span>}
         {rescanResult && <span className="success-text">{rescanResult}</span>}
+        {deleteResult && <span className="success-text">{deleteResult}</span>}
       </div>
+
+      <p className="scan-info-text" style={{ marginTop: '8px' }}>
+        {t('settings.deleteFolderHint')}
+      </p>
+
+      {rescanProgress && (
+        <div className="scan-progress">
+          <div className="scan-progress-bar">
+            <div
+              className="scan-progress-fill"
+              style={{ width: rescanProgress.total > 0 ? `${(rescanProgress.processed / rescanProgress.total) * 100}%` : '0%' }}
+            />
+          </div>
+          <p className="scan-progress-text">
+            {t('settings.filesProcessed', { processed: rescanProgress.processed, total: rescanProgress.total })}
+          </p>
+        </div>
+      )}
+
+      {deleteProgress && (
+        <div className="scan-progress">
+          <div className="scan-progress-bar">
+            <div
+              className="scan-progress-fill"
+              style={{ width: deleteProgress.total > 0 ? `${(deleteProgress.processed / deleteProgress.total) * 100}%` : '0%' }}
+            />
+          </div>
+          <p className="scan-progress-text">
+            {t('settings.deleteProgress', { processed: deleteProgress.processed, total: deleteProgress.total })}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

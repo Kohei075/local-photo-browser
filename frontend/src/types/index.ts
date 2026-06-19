@@ -50,6 +50,7 @@ export interface FolderNode {
   name: string;
   path: string;
   children: FolderNode[];
+  scanned?: boolean;
 }
 
 export interface FolderTreeResponse {

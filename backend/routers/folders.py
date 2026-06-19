@@ -78,12 +78,14 @@ def browse_folders(
     path: str = Query(""),
     max_depth: int = Query(10, ge=1, le=20),
     extensions: str = Query(""),
+    db: Session = Depends(get_db),
 ):
     """Browse filesystem folders under a given root path.
 
     If extensions is provided (comma-separated, e.g. "jpg,png"),
     only folders that contain matching files (directly or in descendants)
-    are included in the tree.
+    are included in the tree. Each node is also flagged `scanned` when it (or
+    any descendant) already has photo records in the database.
     """
     if not path or not os.path.isdir(path):
         return {"folders": []}
@@ -91,6 +93,17 @@ def browse_folders(
     ext_set: set[str] | None = None
     if extensions.strip():
         ext_set = {e.strip().lower().lstrip(".") for e in extensions.split(",") if e.strip()}
+
+    # Build the set of folders (and their ancestors) that contain scanned photos.
+    scanned_prefixes: set[str] = set()
+    for (file_path,) in db.query(Photo.file_path).all():
+        cur = os.path.normcase(os.path.normpath(os.path.dirname(file_path)))
+        while cur and cur not in scanned_prefixes:
+            scanned_prefixes.add(cur)
+            parent = os.path.dirname(cur)
+            if parent == cur:
+                break
+            cur = parent
 
     def _has_matching_files(directory: str) -> bool:
         """Check if directory directly contains any file with a target extension."""
@@ -122,10 +135,12 @@ def browse_folders(
                     has_children = len(children) > 0
                     if not has_files and not has_children:
                         continue
+                norm = os.path.normcase(os.path.normpath(entry.path))
                 result.append({
                     "name": entry.name,
                     "path": os.path.normpath(entry.path),
                     "children": children,
+                    "scanned": norm in scanned_prefixes,
                 })
         return result
 
