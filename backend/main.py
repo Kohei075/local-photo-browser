@@ -19,7 +19,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-from routers import settings, scan, photos, images, favorites, folders
+from routers import settings, scan, photos, images, favorites, folders, combinations
 
 app.include_router(settings.router, prefix="/api")
 app.include_router(scan.router, prefix="/api")
@@ -27,6 +27,7 @@ app.include_router(photos.router, prefix="/api")
 app.include_router(images.router, prefix="/api")
 app.include_router(favorites.router, prefix="/api")
 app.include_router(folders.router, prefix="/api")
+app.include_router(combinations.router, prefix="/api")
 
 # Serve frontend static files in production
 frontend_dist = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "frontend", "dist")

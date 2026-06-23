@@ -23,6 +23,8 @@ export function ViewerPage() {
   const [loading, setLoading] = useState(true);
   const [randomPicks, setRandomPicks] = useState<Photo[]>([]);
   const [showRandomPicks, setShowRandomPicks] = useState(false);
+  const [comboSaved, setComboSaved] = useState(false);
+  const [cameFromFavorites, setCameFromFavorites] = useState(false);
 
   const handleRandomPicksRef = useRef<() => Promise<void>>(undefined);
   const photoViewerRef = useRef<PhotoViewerHandle>(null);
@@ -69,14 +71,16 @@ export function ViewerPage() {
 
   // Consume location.state randomPicks from gallery
   useEffect(() => {
-    const state = location.state as { randomPicks?: Photo[] } | null;
+    const state = location.state as { randomPicks?: Photo[]; from?: string } | null;
     if (state?.randomPicks && state.randomPicks.length > 0) {
       setRandomPicks(state.randomPicks);
       setShowRandomPicks(true);
+      setCameFromFavorites(state.from === 'favorites');
       window.history.replaceState({}, '');
     } else {
       setShowRandomPicks(false);
       setRandomPicks([]);
+      setCameFromFavorites(false);
     }
   }, [location.key]);
 
@@ -112,6 +116,15 @@ export function ViewerPage() {
 
   handleRandomPicksRef.current = handleRandomPicks;
 
+  const handleSaveCombination = useCallback(async () => {
+    if (randomPicks.length === 0) return;
+    try {
+      await api.post('/combinations', { photo_ids: randomPicks.map((p) => p.id) });
+      setComboSaved(true);
+      setTimeout(() => setComboSaved(false), 3000);
+    } catch { /* ignore */ }
+  }, [randomPicks]);
+
   // Keyboard navigation
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -143,23 +156,31 @@ export function ViewerPage() {
           }
           break;
         case 'Escape':
-          navigate('/');
+          navigate(cameFromFavorites ? '/favorites' : '/');
           break;
       }
     };
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [showRandomPicks, neighbors, goTo, navigate]);
+  }, [showRandomPicks, neighbors, goTo, navigate, cameFromFavorites]);
 
   if (!photo) return <LoadingSpinner message="Loading photo..." />;
 
   return (
     <div className="viewer-page">
       <div className="viewer-top-bar">
-        <button className="btn" onClick={() => navigate('/')}>
+        <button className="btn" onClick={() => navigate(cameFromFavorites ? '/favorites' : '/')}>
           &#8592; {t('viewer.backToGallery')}
         </button>
+        {showRandomPicks && !cameFromFavorites && (
+          <>
+            <button className="btn btn-sm" onClick={handleSaveCombination} disabled={comboSaved}>
+              {comboSaved ? t('viewer.combinationSaved') : `♡ ${t('viewer.saveCombination')}`}
+            </button>
+            <span style={{ flex: 1 }} />
+          </>
+        )}
         {!showRandomPicks && (
           <span className="viewer-filename" title={photo.file_path}>
             {(() => {
@@ -226,6 +247,7 @@ export function ViewerPage() {
           onSelect={(id) => navigate(`/viewer/${id}`)}
           onClose={() => setShowRandomPicks(false)}
           onShuffle={handleRandomPicks}
+          onReorder={setRandomPicks}
         />
       ) : (
         <PhotoViewer ref={photoViewerRef} photo={photo} />

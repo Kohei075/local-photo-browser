@@ -126,13 +126,14 @@ interface RandomPicksPanelProps {
   onSelect: (id: number) => void;
   onClose: () => void;
   onShuffle: () => void;
+  onReorder?: (photos: Photo[]) => void;
 }
 
 export interface RandomPicksPanelHandle {
   toggleFullscreen: () => void;
 }
 
-export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPanelProps>(function RandomPicksPanel({ photos: initialPhotos, onSelect, onClose, onShuffle }, ref) {
+export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPanelProps>(function RandomPicksPanel({ photos: initialPhotos, onSelect, onClose, onShuffle, onReorder }, ref) {
   const panelRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [layout, setLayout] = useState<'horizontal' | 'vertical'>('horizontal');
@@ -190,11 +191,12 @@ export const RandomPicksPanel = forwardRef<RandomPicksPanelHandle, RandomPicksPa
       const next = [...prev];
       const [moved] = next.splice(dragIndex, 1);
       next.splice(dropIndex, 0, moved);
+      onReorder?.(next);
       return next;
     });
     setDragIndex(null);
     setOverIndex(null);
-  }, [dragIndex]);
+  }, [dragIndex, onReorder]);
 
   const handleDragEnd = useCallback(() => {
     setDragIndex(null);

@@ -29,6 +29,7 @@ const translations = {
   'sidebar.searching': { ja: '検索中...', en: 'Searching...' },
   'sidebar.noResults': { ja: '結果なし', en: 'No results' },
   'sidebar.allPhotos': { ja: 'すべての写真', en: 'All Photos' },
+  'sidebar.favorites': { ja: 'お気に入り', en: 'Favorites' },
   'sidebar.includeSubfolders': { ja: '配下フォルダの写真も表示', en: 'Include subfolders' },
   'sidebar.mediaFilter.all': { ja: 'すべて', en: 'All' },
   'sidebar.mediaFilter.photos': { ja: '写真のみ', en: 'Photos only' },
@@ -47,6 +48,8 @@ const translations = {
   'viewer.screenshotFailed': { ja: 'スクリーンショットの保存に失敗しました', en: 'Failed to save screenshot' },
   'viewer.screenshotNoFolder': { ja: '設定画面でスクリーンショットの保存先を設定してください', en: 'Please set the screenshot folder in Settings' },
   'viewer.randomPicks': { ja: '4枚ランダム表示', en: '4 Random Photos' },
+  'viewer.saveCombination': { ja: '組み合わせをお気に入りに追加', en: 'Save combination to favorites' },
+  'viewer.combinationSaved': { ja: 'お気に入りに保存しました', en: 'Saved to favorites' },
   'viewer.backToPhoto': { ja: '写真に戻る', en: 'Back to Photo' },
   'viewer.backToGallery': { ja: '戻る', en: 'Back to Gallery' },
   'viewer.copyPath': { ja: 'パスをコピー', en: 'Copy Path' },
@@ -98,6 +101,13 @@ const translations = {
   'settings.deleteConfirm': { ja: '「{path}」内のスキャン済みデータを削除します。よろしいですか？（ファイル本体は削除されません）', en: 'Delete scanned data within "{path}"? (The actual files are not deleted.)' },
   'settings.deleteComplete': { ja: '{count}件のデータを削除しました', en: 'Deleted {count} items' },
   'settings.deleteProgress': { ja: '削除中: {processed} / {total}', en: 'Deleting: {processed} / {total}' },
+
+  // Favorites (combinations)
+  'favorites.title': { ja: 'お気に入り一覧', en: 'Favorite Combinations' },
+  'favorites.empty': { ja: 'お気に入りの組み合わせはまだありません', en: 'No favorite combinations yet' },
+  'favorites.view': { ja: '表示', en: 'View' },
+  'favorites.delete': { ja: '削除', en: 'Delete' },
+  'favorites.deleteConfirm': { ja: 'この組み合わせを削除しますか？', en: 'Delete this combination?' },
 } as const;
 
 type TranslationKey = keyof typeof translations;

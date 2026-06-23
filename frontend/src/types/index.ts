@@ -27,6 +27,12 @@ export interface NeighborsResponse {
   next_id: number | null;
 }
 
+export interface Combination {
+  id: number;
+  created_at: string;
+  photos: Photo[];
+}
+
 export interface Settings {
   root_folder: string;
   extensions: string;

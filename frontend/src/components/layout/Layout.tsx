@@ -4,7 +4,7 @@ import { FolderSidebar } from '../sidebar/FolderSidebar';
 
 export function Layout() {
   const location = useLocation();
-  const showSidebar = location.pathname === '/' || location.pathname.startsWith('/viewer');
+  const showSidebar = location.pathname === '/' || location.pathname.startsWith('/viewer') || location.pathname === '/favorites';
 
   return (
     <div className="app-layout">

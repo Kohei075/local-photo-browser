@@ -122,7 +122,7 @@ export function FolderSidebar() {
 
   const handleFolderSelect = useCallback((path: string | null) => {
     setSelectedFolderPath(path);
-    if (location.pathname.startsWith('/viewer')) {
+    if (location.pathname !== '/') {
       navigate('/');
     }
   }, [setSelectedFolderPath, location.pathname, navigate]);
@@ -222,8 +222,15 @@ export function FolderSidebar() {
         </div>
       ) : (
         <div className="sidebar-tree">
-          <button className="sidebar-clear-btn" onClick={() => handleFolderSelect(null)} disabled={!selectedFolderPath}>
+          <button className="sidebar-clear-btn" onClick={() => handleFolderSelect(null)} disabled={!selectedFolderPath && location.pathname === '/'}>
             {t('sidebar.allPhotos')}
+          </button>
+          <button
+            className={`sidebar-favorites-btn${location.pathname === '/favorites' ? ' active' : ''}`}
+            onClick={() => navigate('/favorites')}
+          >
+            <span className="sidebar-favorites-icon">♡</span>
+            {t('sidebar.favorites')}
           </button>
           <label className="sidebar-include-subfolders">
             <input
