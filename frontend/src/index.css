@@ -428,6 +428,18 @@ input:focus, select:focus {
   padding: 8px 4px 24px;
 }
 
+.favorites-header {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.favorites-sort {
+  font-size: 0.85rem;
+  padding: 6px 10px;
+}
+
 .favorites-list {
   display: flex;
   flex-direction: column;

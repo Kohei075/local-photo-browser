@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api/client';
 import { useTranslation } from '../i18n/useTranslation';
@@ -6,9 +6,12 @@ import { isVideo } from '../utils/media';
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import type { Combination } from '../types';
 
+type SortOrder = 'desc' | 'asc';
+
 export function FavoritesPage() {
   const [combinations, setCombinations] = useState<Combination[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -28,9 +31,24 @@ export function FavoritesPage() {
     fetchCombinations();
   }, [fetchCombinations]);
 
-  const handleView = (combo: Combination) => {
-    if (combo.photos.length === 0) return;
-    navigate(`/viewer/${combo.photos[0].id}`, { state: { randomPicks: combo.photos, from: 'favorites' } });
+  const sorted = useMemo(() => {
+    const arr = [...combinations];
+    arr.sort((a, b) =>
+      sortOrder === 'desc'
+        ? b.created_at.localeCompare(a.created_at)
+        : a.created_at.localeCompare(b.created_at),
+    );
+    return arr;
+  }, [combinations, sortOrder]);
+
+  const handleView = (index: number) => {
+    const combo = sorted[index];
+    if (!combo || combo.photos.length === 0) return;
+    // Pass the displayed (sorted) list + index so arrow keys move between
+    // combinations in the same order shown here.
+    navigate(`/viewer/${combo.photos[0].id}`, {
+      state: { randomPicks: combo.photos, from: 'favorites', combos: sorted, index },
+    });
   };
 
   const handleDelete = async (id: number) => {
@@ -45,18 +63,30 @@ export function FavoritesPage() {
 
   return (
     <div className="favorites-page">
-      <h2>{t('favorites.title')}</h2>
+      <div className="favorites-header">
+        <h2>{t('favorites.title')}</h2>
+        {combinations.length > 0 && (
+          <select
+            className="favorites-sort"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+          >
+            <option value="desc">{t('grid.newestFirst')}</option>
+            <option value="asc">{t('grid.oldestFirst')}</option>
+          </select>
+        )}
+      </div>
       {combinations.length === 0 ? (
         <div className="empty-state">
           <p>{t('favorites.empty')}</p>
         </div>
       ) : (
         <div className="favorites-list">
-          {combinations.map((combo) => (
+          {sorted.map((combo, index) => (
             <div key={combo.id} className="favorite-combo">
               <button
                 className="favorite-combo-thumbs"
-                onClick={() => handleView(combo)}
+                onClick={() => handleView(index)}
                 title={t('favorites.view')}
               >
                 {combo.photos.map((photo) => (

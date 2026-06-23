@@ -25,6 +25,8 @@ export function ViewerPage() {
   const [showRandomPicks, setShowRandomPicks] = useState(false);
   const [comboSaved, setComboSaved] = useState(false);
   const [cameFromFavorites, setCameFromFavorites] = useState(false);
+  const [favCombos, setFavCombos] = useState<Photo[][]>([]);
+  const [favIndex, setFavIndex] = useState(0);
 
   const handleRandomPicksRef = useRef<() => Promise<void>>(undefined);
   const photoViewerRef = useRef<PhotoViewerHandle>(null);
@@ -71,16 +73,26 @@ export function ViewerPage() {
 
   // Consume location.state randomPicks from gallery
   useEffect(() => {
-    const state = location.state as { randomPicks?: Photo[]; from?: string } | null;
+    const state = location.state as {
+      randomPicks?: Photo[];
+      from?: string;
+      combos?: { photos: Photo[] }[];
+      index?: number;
+    } | null;
     if (state?.randomPicks && state.randomPicks.length > 0) {
       setRandomPicks(state.randomPicks);
       setShowRandomPicks(true);
-      setCameFromFavorites(state.from === 'favorites');
+      const fromFav = state.from === 'favorites';
+      setCameFromFavorites(fromFav);
+      setFavCombos(fromFav && state.combos ? state.combos.map((c) => c.photos) : []);
+      setFavIndex(fromFav && typeof state.index === 'number' ? state.index : 0);
       window.history.replaceState({}, '');
     } else {
       setShowRandomPicks(false);
       setRandomPicks([]);
       setCameFromFavorites(false);
+      setFavCombos([]);
+      setFavIndex(0);
     }
   }, [location.key]);
 
@@ -116,6 +128,17 @@ export function ViewerPage() {
 
   handleRandomPicksRef.current = handleRandomPicks;
 
+  // Move to the previous/next favorite combination (when opened from /favorites)
+  const goToFavorite = useCallback((delta: number) => {
+    if (favCombos.length === 0) return;
+    setFavIndex((cur) => {
+      const next = (cur + delta + favCombos.length) % favCombos.length;
+      setRandomPicks(favCombos[next]);
+      setComboSaved(false);
+      return next;
+    });
+  }, [favCombos]);
+
   const handleSaveCombination = useCallback(async () => {
     if (randomPicks.length === 0) return;
     try {
@@ -134,7 +157,8 @@ export function ViewerPage() {
         case 'ArrowLeft':
           e.preventDefault();
           if (showRandomPicks) {
-            handleRandomPicksRef.current?.();
+            if (cameFromFavorites) goToFavorite(-1);
+            else handleRandomPicksRef.current?.();
           } else {
             goTo(neighbors.prev_id);
           }
@@ -142,7 +166,8 @@ export function ViewerPage() {
         case 'ArrowRight':
           e.preventDefault();
           if (showRandomPicks) {
-            handleRandomPicksRef.current?.();
+            if (cameFromFavorites) goToFavorite(1);
+            else handleRandomPicksRef.current?.();
           } else {
             goTo(neighbors.next_id);
           }
@@ -163,7 +188,7 @@ export function ViewerPage() {
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [showRandomPicks, neighbors, goTo, navigate, cameFromFavorites]);
+  }, [showRandomPicks, neighbors, goTo, navigate, cameFromFavorites, goToFavorite]);
 
   if (!photo) return <LoadingSpinner message="Loading photo..." />;
 
