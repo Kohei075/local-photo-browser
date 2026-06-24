@@ -460,7 +460,7 @@ input:focus, select:focus {
 .favorite-combo-thumbs {
   display: flex;
   gap: 6px;
-  flex: 1;
+  flex: 0 1 auto;
   min-width: 0;
   cursor: pointer;
   background: transparent;
@@ -469,8 +469,8 @@ input:focus, select:focus {
 
 .favorite-combo-thumb {
   position: relative;
-  width: 150px;
-  height: 150px;
+  width: 160px;
+  height: 180px;
   flex-shrink: 0;
   background: var(--photo-bg);
   border-radius: var(--radius-sm);
