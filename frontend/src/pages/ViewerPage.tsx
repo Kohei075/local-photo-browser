@@ -102,13 +102,16 @@ export function ViewerPage() {
 
   const handleRandom = useCallback(async () => {
     const params = new URLSearchParams();
-    if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
+    if (selectedFolderPath !== null) {
+      params.set('folder_path', selectedFolderPath);
+      params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
+    }
     params.set('media_type', mediaFilter);
     try {
       const randomPhoto = await api.get<Photo>(`/photos/random?${params}`);
       navigate(`/viewer/${randomPhoto.id}`);
     } catch { /* no photos */ }
-  }, [selectedFolderPath, mediaFilter, navigate]);
+  }, [selectedFolderPath, includeSubfolders, mediaFilter, navigate]);
 
   const handleRandomPicks = useCallback(async () => {
     if (!photo) return;
@@ -116,7 +119,10 @@ export function ViewerPage() {
       sort_by: 'random',
       per_page: '5',
     });
-    if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
+    if (selectedFolderPath !== null) {
+      params.set('folder_path', selectedFolderPath);
+      params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
+    }
     params.set('media_type', mediaFilter);
     try {
       const res = await api.get<PhotoListResponse>(`/photos?${params}`);
@@ -124,7 +130,7 @@ export function ViewerPage() {
       setRandomPicks(picks);
       setShowRandomPicks(true);
     } catch { /* ignore */ }
-  }, [photo, selectedFolderPath, mediaFilter]);
+  }, [photo, selectedFolderPath, includeSubfolders, mediaFilter]);
 
   handleRandomPicksRef.current = handleRandomPicks;
 

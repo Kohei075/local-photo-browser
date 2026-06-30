@@ -7,7 +7,7 @@ import { isVideo } from '../../utils/media';
 import type { PhotoListResponse } from '../../types';
 
 export function FilterBar() {
-  const { selectedFolderPath, mediaFilter, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore();
+  const { selectedFolderPath, includeSubfolders, mediaFilter, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore();
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -16,7 +16,10 @@ export function FilterBar() {
       sort_by: 'random',
       per_page: '4',
     });
-    if (selectedFolderPath !== null) params.set('folder_path', selectedFolderPath);
+    if (selectedFolderPath !== null) {
+      params.set('folder_path', selectedFolderPath);
+      params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
+    }
     params.set('media_type', mediaFilter);
     try {
       const res = await api.get<PhotoListResponse>(`/photos?${params}`);
@@ -24,7 +27,7 @@ export function FilterBar() {
         navigate(`/viewer/${res.items[0].id}`, { state: { randomPicks: res.items } });
       }
     } catch { /* ignore */ }
-  }, [selectedFolderPath, mediaFilter, navigate]);
+  }, [selectedFolderPath, includeSubfolders, mediaFilter, navigate]);
 
   const handleViewSelected = useCallback(() => {
     if (selectedPhotos.length > 0) {
