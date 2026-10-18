@@ -23,7 +23,7 @@ export function usePhotos() {
         params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
       }
       params.set('media_type', mediaFilter);
-      const data = await api.get<PhotoListResponse>(`/photos?${params}`);
+      const data = await api.get<PhotoListResponse>(`/photos?${params}`, { deduplicate: sortBy !== 'random' });
       if (append) {
         appendPhotos(data.items, data.total, data.page, data.total_pages);
       } else {

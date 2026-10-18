@@ -129,7 +129,7 @@ export function FolderSidebar() {
 
   // Fetch folder tree on mount
   useEffect(() => {
-    api.get<FolderTreeResponse>('/folders').then((data) => {
+    api.get<FolderTreeResponse>('/folders', { deduplicate: true }).then((data) => {
       setFolderTree(data.root, data.folders);
     }).catch(() => {});
   }, [setFolderTree]);
