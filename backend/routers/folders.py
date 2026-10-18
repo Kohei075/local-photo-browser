@@ -62,7 +62,8 @@ def get_folders(db: Session = Depends(get_db)):
     for (file_path,) in rows:
         folder = os.path.dirname(file_path)
         # Add this folder and all parent folders up to root
-        while folder and len(folder) >= len(root_folder):
+        # Ancestors of an existing folder have already been collected too.
+        while folder and len(folder) >= len(root_folder) and folder not in folder_set:
             folder_set.add(folder)
             parent = os.path.dirname(folder)
             if parent == folder:
