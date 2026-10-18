@@ -6,7 +6,7 @@ import { useAppStore } from '../stores/appStore';
 export function useSettings() {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [loading, setLoading] = useState(true);
-  const { setScanStatus } = useAppStore();
+  const setScanStatus = useAppStore((state) => state.setScanStatus);
 
   const fetchSettings = useCallback(async () => {
     setLoading(true);

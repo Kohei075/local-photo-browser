@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../api/client';
@@ -15,7 +16,15 @@ export function ViewerPage() {
   const { photoId } = useParams<{ photoId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, folderRoot, setSelectedFolderPath } = useAppStore();
+  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, folderRoot, setSelectedFolderPath } = useAppStore(useShallow((state) => ({
+    sortBy: state.sortBy,
+    sortOrder: state.sortOrder,
+    selectedFolderPath: state.selectedFolderPath,
+    includeSubfolders: state.includeSubfolders,
+    mediaFilter: state.mediaFilter,
+    folderRoot: state.folderRoot,
+    setSelectedFolderPath: state.setSelectedFolderPath,
+  })));
   const { t } = useTranslation();
 
   const [photo, setPhoto] = useState<Photo | null>(null);

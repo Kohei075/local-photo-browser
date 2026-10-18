@@ -13,7 +13,7 @@ interface ScanButtonProps {
 }
 
 export function ScanButton({ rootFolder, onStartScan, onPollStatus, onReset }: ScanButtonProps) {
-  const { scanStatus } = useAppStore();
+  const scanStatus = useAppStore((state) => state.scanStatus);
   const [scanning, setScanning] = useState(false);
   const [photoCount, setPhotoCount] = useState<number | null>(null);
   const [resetting, setResetting] = useState(false);

@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useEffect, useRef, useCallback } from 'react';
 import { useAppStore } from '../../stores/appStore';
 import { usePhotos } from '../../hooks/usePhotos';
@@ -6,12 +7,25 @@ import { LoadingSpinner } from '../common/LoadingSpinner';
 import { useTranslation } from '../../i18n/useTranslation';
 
 export function PhotoGrid() {
-  const { photos, page, totalPages, isLoadingPhotos } = useAppStore();
+  const { photos, page, totalPages, isLoadingPhotos } = useAppStore(useShallow((state) => ({
+    photos: state.photos,
+    page: state.page,
+    totalPages: state.totalPages,
+    isLoadingPhotos: state.isLoadingPhotos,
+  })));
   const { fetchPhotos, loadMore } = usePhotos();
   const observerRef = useRef<HTMLDivElement>(null);
   const initialFetchDone = useRef(false);
 
-  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, randomKey, gridColumns } = useAppStore();
+  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, randomKey, gridColumns } = useAppStore(useShallow((state) => ({
+    sortBy: state.sortBy,
+    sortOrder: state.sortOrder,
+    selectedFolderPath: state.selectedFolderPath,
+    includeSubfolders: state.includeSubfolders,
+    mediaFilter: state.mediaFilter,
+    randomKey: state.randomKey,
+    gridColumns: state.gridColumns,
+  })));
   const { t } = useTranslation();
 
   useEffect(() => {

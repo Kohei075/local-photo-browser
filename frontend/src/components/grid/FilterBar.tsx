@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
@@ -7,7 +8,15 @@ import { isVideo } from '../../utils/media';
 import type { PhotoListResponse } from '../../types';
 
 export function FilterBar() {
-  const { selectedFolderPath, includeSubfolders, mediaFilter, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore();
+  const { selectedFolderPath, includeSubfolders, mediaFilter, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore(useShallow((state) => ({
+    selectedFolderPath: state.selectedFolderPath,
+    includeSubfolders: state.includeSubfolders,
+    mediaFilter: state.mediaFilter,
+    selectedPhotoIds: state.selectedPhotoIds,
+    selectedPhotos: state.selectedPhotos,
+    togglePhotoSelection: state.togglePhotoSelection,
+    clearPhotoSelection: state.clearPhotoSelection,
+  })));
   const { t } = useTranslation();
   const navigate = useNavigate();
 

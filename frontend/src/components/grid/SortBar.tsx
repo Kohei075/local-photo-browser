@@ -1,9 +1,19 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { SortBy, SortOrder } from '../../types';
 
 export function SortBar() {
-  const { sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos, refreshRandom, gridColumns, setGridColumns } = useAppStore();
+  const { sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos, refreshRandom, gridColumns, setGridColumns } = useAppStore(useShallow((state) => ({
+    sortBy: state.sortBy,
+    sortOrder: state.sortOrder,
+    setSortBy: state.setSortBy,
+    setSortOrder: state.setSortOrder,
+    totalPhotos: state.totalPhotos,
+    refreshRandom: state.refreshRandom,
+    gridColumns: state.gridColumns,
+    setGridColumns: state.setGridColumns,
+  })));
   const { t } = useTranslation();
 
   const sortOptions: { value: SortBy; label: string }[] = [

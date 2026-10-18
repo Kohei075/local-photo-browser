@@ -4,7 +4,7 @@ import { useAppStore } from '../stores/appStore';
 import type { Photo } from '../types';
 
 export function useFavorite() {
-  const { updatePhoto } = useAppStore();
+  const updatePhoto = useAppStore((state) => state.updatePhoto);
 
   const toggleFavorite = useCallback(async (photo: Photo) => {
     const updated = await api.put<Photo>(`/photos/${photo.id}/favorite`, {

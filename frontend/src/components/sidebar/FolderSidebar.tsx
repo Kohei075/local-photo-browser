@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { api } from '../../api/client';
@@ -9,7 +10,7 @@ function FolderTreeItem({ node, depth, onSelect, expandToPath, collapseKey }: {
   node: FolderNode; depth: number; onSelect: (path: string | null) => void; expandToPath: string | null; collapseKey: number;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const { selectedFolderPath } = useAppStore();
+  const selectedFolderPath = useAppStore((state) => state.selectedFolderPath);
   const isSelected = selectedFolderPath === node.path;
   const hasChildren = node.children.length > 0;
 
@@ -77,7 +78,19 @@ function getSavedWidth(): number {
 }
 
 export function FolderSidebar() {
-  const { folderTree, folderRoot, setFolderTree, selectedFolderPath, setSelectedFolderPath, includeSubfolders, setIncludeSubfolders, mediaFilter, setMediaFilter, isSidebarOpen, setIsSidebarOpen } = useAppStore();
+  const { folderTree, folderRoot, setFolderTree, selectedFolderPath, setSelectedFolderPath, includeSubfolders, setIncludeSubfolders, mediaFilter, setMediaFilter, isSidebarOpen, setIsSidebarOpen } = useAppStore(useShallow((state) => ({
+    folderTree: state.folderTree,
+    folderRoot: state.folderRoot,
+    setFolderTree: state.setFolderTree,
+    selectedFolderPath: state.selectedFolderPath,
+    setSelectedFolderPath: state.setSelectedFolderPath,
+    includeSubfolders: state.includeSubfolders,
+    setIncludeSubfolders: state.setIncludeSubfolders,
+    mediaFilter: state.mediaFilter,
+    setMediaFilter: state.setMediaFilter,
+    isSidebarOpen: state.isSidebarOpen,
+    setIsSidebarOpen: state.setIsSidebarOpen,
+  })));
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SearchResponse['results']>([]);
   const [isSearching, setIsSearching] = useState(false);

@@ -1,3 +1,4 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useCallback } from 'react';
 import { api } from '../api/client';
 import { useAppStore } from '../stores/appStore';
@@ -7,7 +8,19 @@ export function usePhotos() {
   const {
     page, perPage, sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter,
     isLoadingPhotos, setPhotos, appendPhotos, setLoadingPhotos,
-  } = useAppStore();
+  } = useAppStore(useShallow((state) => ({
+    page: state.page,
+    perPage: state.perPage,
+    sortBy: state.sortBy,
+    sortOrder: state.sortOrder,
+    selectedFolderPath: state.selectedFolderPath,
+    includeSubfolders: state.includeSubfolders,
+    mediaFilter: state.mediaFilter,
+    isLoadingPhotos: state.isLoadingPhotos,
+    setPhotos: state.setPhotos,
+    appendPhotos: state.appendPhotos,
+    setLoadingPhotos: state.setLoadingPhotos,
+  })));
 
   const fetchPhotos = useCallback(async (pageNum: number = 1, append: boolean = false) => {
     setLoadingPhotos(true);

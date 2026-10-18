@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { memo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAppStore } from '../../stores/appStore';
 import { isVideo, formatDuration } from '../../utils/media';
@@ -8,10 +8,11 @@ interface PhotoCardProps {
   photo: Photo;
 }
 
-export function PhotoCard({ photo }: PhotoCardProps) {
-  const { selectedPhotoIds, togglePhotoSelection, setLastViewedPhotoId } = useAppStore();
-  const isSelected = selectedPhotoIds.includes(photo.id);
-  const isMaxed = selectedPhotoIds.length >= 4;
+export const PhotoCard = memo(function PhotoCard({ photo }: PhotoCardProps) {
+  const isSelected = useAppStore((state) => state.selectedPhotoIds.includes(photo.id));
+  const isMaxed = useAppStore((state) => state.selectedPhotoIds.length >= 4);
+  const togglePhotoSelection = useAppStore((state) => state.togglePhotoSelection);
+  const setLastViewedPhotoId = useAppStore((state) => state.setLastViewedPhotoId);
   const video = isVideo(photo.extension);
   const [failed, setFailed] = useState(false);
 
@@ -82,4 +83,4 @@ export function PhotoCard({ photo }: PhotoCardProps) {
       </div>
     </Link>
   );
-}
+});
