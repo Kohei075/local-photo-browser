@@ -114,7 +114,16 @@ def cleanup():
     global frontend_process
     if frontend_process and frontend_process.poll() is None:
         print("\n[shutdown] Stopping frontend dev server...", flush=True)
-        frontend_process.terminate()
+        if sys.platform == "win32":
+            # npm.cmd starts Vite as a child process. Terminating only the
+            # wrapper leaves the server running after this launcher exits.
+            subprocess.run(
+                ["taskkill", "/PID", str(frontend_process.pid), "/T", "/F"],
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+        else:
+            frontend_process.terminate()
         try:
             frontend_process.wait(timeout=5)
         except subprocess.TimeoutExpired:

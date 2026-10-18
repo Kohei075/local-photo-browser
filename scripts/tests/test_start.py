@@ -2,7 +2,7 @@ import importlib.util
 import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 spec = importlib.util.spec_from_file_location("launcher", Path(__file__).parents[1] / "start.py")
 launcher = importlib.util.module_from_spec(spec)
@@ -68,6 +68,19 @@ class DependencySetupTests(unittest.TestCase):
             vite.unlink()
             launcher.check_node_deps()
             self.assertEqual(install.call_count, 3)
+
+
+class ShutdownTests(unittest.TestCase):
+    def test_windows_stops_the_owned_npm_process_tree(self):
+        process = MagicMock(pid=12345)
+        process.poll.return_value = None
+        with patch.object(launcher, "frontend_process", process), \
+                patch.object(launcher.sys, "platform", "win32"), \
+                patch.object(launcher.subprocess, "run") as stop:
+            launcher.cleanup()
+            self.assertEqual(stop.call_args.args[0], ["taskkill", "/PID", "12345", "/T", "/F"])
+            process.wait.assert_called_once_with(timeout=5)
+            process.terminate.assert_not_called()
 
 
 if __name__ == "__main__":
