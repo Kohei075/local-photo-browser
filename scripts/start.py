@@ -11,6 +11,11 @@ import signal
 import subprocess
 import shutil
 import atexit
+import argparse
+import hashlib
+import importlib.metadata
+import json
+from pathlib import Path
 
 # Force unbuffered output so prints appear immediately
 os.environ["PYTHONUNBUFFERED"] = "1"
@@ -28,41 +33,65 @@ def run_cmd(args, **kwargs):
     subprocess.check_call(args, **kwargs)
 
 
-def check_python_deps():
-    print("[check] Python dependencies...", flush=True)
-    missing = []
-    for pkg, import_name in [
-        ("fastapi", "fastapi"),
-        ("uvicorn", "uvicorn"),
-        ("sqlalchemy", "sqlalchemy"),
-        ("pillow", "PIL"),
-    ]:
-        try:
-            __import__(import_name)
-        except ImportError:
-            missing.append(pkg)
+def dependency_fingerprint(paths, runtime):
+    digest = hashlib.sha256(runtime.encode())
+    for path in paths:
+        digest.update(Path(path).read_bytes())
+    return digest.hexdigest()
 
-    if missing:
-        print(f"[setup] Installing Python dependencies ({', '.join(missing)})...", flush=True)
+
+def python_fingerprint():
+    requirements = Path(BACKEND_DIR) / "requirements.txt"
+    versions = {}
+    for line in requirements.read_text().splitlines():
+        name = line.split("[")[0].split("==")[0].split(">=")[0].strip()
+        if not name or name.startswith("#"):
+            continue
+        try:
+            versions[name] = importlib.metadata.version(name)
+        except importlib.metadata.PackageNotFoundError:
+            versions[name] = None
+    return dependency_fingerprint(
+        [requirements], sys.executable + sys.version + json.dumps(versions, sort_keys=True)
+    )
+
+
+def check_python_deps(force=False):
+    print("[check] Python dependencies...", flush=True)
+    stamp = Path(BACKEND_DIR) / "data" / "python-dependencies.sha256"
+    fingerprint = python_fingerprint()
+    if force or not stamp.is_file() or stamp.read_text() != fingerprint:
+        print("[setup] Installing Python dependencies (first run or dependencies changed)...", flush=True)
         run_cmd([
             sys.executable, "-m", "pip", "install", "-r",
             os.path.join(BACKEND_DIR, "requirements.txt")
         ])
+        stamp.parent.mkdir(parents=True, exist_ok=True)
+        stamp.write_text(python_fingerprint())
         print("[setup] Python dependencies installed.", flush=True)
     else:
         print("[check] Python dependencies OK.", flush=True)
 
 
-def check_node_deps():
+def check_node_deps(force=False):
     print("[check] Frontend dependencies...", flush=True)
-    node_modules = os.path.join(FRONTEND_DIR, "node_modules")
-    if not os.path.isdir(node_modules):
-        npm_cmd = shutil.which("npm")
-        if npm_cmd is None:
-            print("[error] npm not found. Please install Node.js first.", flush=True)
-            sys.exit(1)
+    npm_cmd = shutil.which("npm")
+    node_cmd = shutil.which("node")
+    if npm_cmd is None or node_cmd is None:
+        raise RuntimeError("npm/node not found. Please install Node.js first.")
+    node_version = subprocess.check_output([node_cmd, "--version"], text=True).strip()
+    manifest = Path(FRONTEND_DIR) / "package.json"
+    lock = Path(FRONTEND_DIR) / "package-lock.json"
+    paths = [manifest, lock] if lock.is_file() else [manifest]
+    fingerprint = dependency_fingerprint(paths, node_cmd + node_version)
+    stamp = Path(FRONTEND_DIR) / "node_modules" / ".photo-browser-dependencies.sha256"
+    vite_cli = Path(FRONTEND_DIR) / "node_modules" / "vite" / "bin" / "vite.js"
+    if force or not vite_cli.is_file() or not stamp.is_file() or stamp.read_text() != fingerprint:
         print("[setup] Installing frontend dependencies (npm install)...", flush=True)
         run_cmd([npm_cmd, "install"], cwd=FRONTEND_DIR)
+        # npm may update the lockfile; remember the successfully installed inputs.
+        paths = [manifest, lock] if lock.is_file() else [manifest]
+        stamp.write_text(dependency_fingerprint(paths, node_cmd + node_version))
         print("[setup] Frontend dependencies installed.", flush=True)
     else:
         print("[check] Frontend dependencies OK.", flush=True)
@@ -93,10 +122,18 @@ def cleanup():
 
 
 def main():
-    is_dev = "--dev" in sys.argv
+    parser = argparse.ArgumentParser(description="Start Local Photo Browser")
+    parser.add_argument("--dev", action="store_true", help="Start the Vite development server too")
+    parser.add_argument("--setup-only", action="store_true", help="Reinstall dependencies without starting servers")
+    args = parser.parse_args()
+    is_dev = args.dev
 
     print("", flush=True)
-    check_python_deps()
+    check_python_deps(force=args.setup_only)
+
+    if args.setup_only:
+        check_node_deps(force=True)
+        return
 
     os.chdir(BACKEND_DIR)
     sys.path.insert(0, BACKEND_DIR)
