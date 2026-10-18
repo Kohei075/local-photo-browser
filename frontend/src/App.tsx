@@ -1,9 +1,11 @@
+import { lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Layout } from './components/layout/Layout';
 import { GridPage } from './pages/GridPage';
-import { ViewerPage } from './pages/ViewerPage';
-import { SettingsPage } from './pages/SettingsPage';
-import { FavoritesPage } from './pages/FavoritesPage';
+
+const ViewerPage = lazy(() => import('./pages/ViewerPage').then((module) => ({ default: module.ViewerPage })));
+const SettingsPage = lazy(() => import('./pages/SettingsPage').then((module) => ({ default: module.SettingsPage })));
+const FavoritesPage = lazy(() => import('./pages/FavoritesPage').then((module) => ({ default: module.FavoritesPage })));
 
 export default function App() {
   return (
