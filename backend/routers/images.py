@@ -1,9 +1,10 @@
 import os
 import subprocess
 import sys
+from email.utils import parsedate_to_datetime
 
-from fastapi import APIRouter, Depends, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import FileResponse, Response
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
@@ -16,6 +17,33 @@ from services.video import generate_video_thumbnail
 from services.pathutil import long_path
 
 router = APIRouter()
+
+
+def thumbnail_response(request: Request, path: str):
+    """Revalidate cached thumbnails without resending unchanged JPEG data."""
+    stat = os.stat(path)
+    response = FileResponse(
+        path, media_type="image/jpeg", stat_result=stat,
+        headers={"Cache-Control": "no-cache"},
+    )
+    if_none_match = request.headers.get("if-none-match")
+    unchanged = False
+    if if_none_match is not None:
+        # If-None-Match takes precedence over If-Modified-Since, including
+        # when it doesn't match. GET requests permit weak ETag comparison.
+        tags = [tag.strip().removeprefix("W/") for tag in if_none_match.split(",")]
+        unchanged = "*" in tags or response.headers["etag"] in tags
+    elif since := request.headers.get("if-modified-since"):
+        try:
+            modified_since = parsedate_to_datetime(since)
+            unchanged = modified_since.tzinfo is not None and int(stat.st_mtime) <= modified_since.timestamp()
+        except (TypeError, ValueError, OverflowError):
+            pass
+    if unchanged:
+        return Response(status_code=304, headers={
+            key: response.headers[key] for key in ("cache-control", "etag", "last-modified")
+        })
+    return response
 
 
 @router.get("/images/{photo_id}/full")
@@ -54,7 +82,7 @@ def get_full_image(photo_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/images/{photo_id}/thumbnail")
-def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
+def get_thumbnail(photo_id: int, request: Request, db: Session = Depends(get_db)):
     photo = db.query(Photo).filter(Photo.id == photo_id).first()
     if not photo:
         raise HTTPException(status_code=404, detail="Photo not found")
@@ -80,11 +108,7 @@ def get_thumbnail(photo_id: int, db: Session = Depends(get_db)):
         photo.thumbnail_path = thumb_path
         db.commit()
 
-    return FileResponse(
-        thumb_path,
-        media_type="image/jpeg",
-        headers={"Cache-Control": "no-cache"},
-    )
+    return thumbnail_response(request, thumb_path)
 
 
 @router.post("/images/{photo_id}/reveal")
