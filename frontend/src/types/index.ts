@@ -22,6 +22,11 @@ export interface PhotoListResponse {
   total_pages: number;
 }
 
+export interface TrashPhotosResponse {
+  deleted_ids: number[];
+  failed: { id: number; file_name: string; reason: 'not_found' | 'trash_failed' }[];
+}
+
 export interface NeighborsResponse {
   prev_id: number | null;
   next_id: number | null;
@@ -51,6 +56,8 @@ export interface ScanStatus {
 export type SortBy = 'created_at' | 'modified_at' | 'taken_at' | 'file_name' | 'random';
 export type SortOrder = 'asc' | 'desc';
 export type MediaFilter = 'all' | 'photos' | 'videos';
+/** Date column the date-range filter applies to. */
+export type DateField = 'created_at' | 'modified_at' | 'taken_at';
 
 export interface FolderNode {
   name: string;

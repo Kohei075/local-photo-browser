@@ -5,3 +5,4 @@ aiosqlite==0.20.0
 pillow>=11.1.0
 python-multipart==0.0.20
 imageio-ffmpeg>=0.5.1
+Send2Trash[nativeLib]>=1.8.3,<2

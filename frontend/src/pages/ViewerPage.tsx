@@ -10,18 +10,22 @@ import type { RandomPicksPanelHandle } from '../components/viewer/RandomPicksPan
 import { LoadingSpinner } from '../components/common/LoadingSpinner';
 import { useTranslation } from '../i18n/useTranslation';
 import { formatDuration } from '../utils/media';
+import { appendPhotoFilters } from '../utils/photoParams';
 import type { Photo, NeighborsResponse, PhotoListResponse } from '../types';
 
 export function ViewerPage() {
   const { photoId } = useParams<{ photoId: string }>();
   const navigate = useNavigate();
   const location = useLocation();
-  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, folderRoot, setSelectedFolderPath } = useAppStore(useShallow((state) => ({
+  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, folderRoot, setSelectedFolderPath } = useAppStore(useShallow((state) => ({
     sortBy: state.sortBy,
     sortOrder: state.sortOrder,
     selectedFolderPath: state.selectedFolderPath,
     includeSubfolders: state.includeSubfolders,
     mediaFilter: state.mediaFilter,
+    dateField: state.dateField,
+    dateFrom: state.dateFrom,
+    dateTo: state.dateTo,
     folderRoot: state.folderRoot,
     setSelectedFolderPath: state.setSelectedFolderPath,
   })));
@@ -60,11 +64,7 @@ export function ViewerPage() {
           sort_by: sortBy,
           sort_order: sortOrder,
         });
-        if (selectedFolderPath !== null) {
-          neighborParams.set('folder_path', selectedFolderPath);
-          neighborParams.set('include_subfolders', includeSubfolders ? 'true' : 'false');
-        }
-        neighborParams.set('media_type', mediaFilter);
+        appendPhotoFilters(neighborParams, { selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo });
         const neighborsData = await api.get<NeighborsResponse>(`/photos/${id}/neighbors?${neighborParams}`);
         setNeighbors(neighborsData);
       }
@@ -73,7 +73,7 @@ export function ViewerPage() {
     } finally {
       setLoading(false);
     }
-  }, [sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, navigate]);
+  }, [sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, navigate]);
 
   // Fetch photo data
   useEffect(() => {
@@ -111,16 +111,12 @@ export function ViewerPage() {
 
   const handleRandom = useCallback(async () => {
     const params = new URLSearchParams();
-    if (selectedFolderPath !== null) {
-      params.set('folder_path', selectedFolderPath);
-      params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
-    }
-    params.set('media_type', mediaFilter);
+    appendPhotoFilters(params, { selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo });
     try {
       const randomPhoto = await api.get<Photo>(`/photos/random?${params}`);
       navigate(`/viewer/${randomPhoto.id}`);
     } catch { /* no photos */ }
-  }, [selectedFolderPath, includeSubfolders, mediaFilter, navigate]);
+  }, [selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, navigate]);
 
   const handleRandomPicks = useCallback(async () => {
     if (!photo) return;
@@ -128,18 +124,14 @@ export function ViewerPage() {
       sort_by: 'random',
       per_page: '5',
     });
-    if (selectedFolderPath !== null) {
-      params.set('folder_path', selectedFolderPath);
-      params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
-    }
-    params.set('media_type', mediaFilter);
+    appendPhotoFilters(params, { selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo });
     try {
       const res = await api.get<PhotoListResponse>(`/photos?${params}`);
       const picks = res.items.filter((p) => p.id !== photo.id).slice(0, 4);
       setRandomPicks(picks);
       setShowRandomPicks(true);
     } catch { /* ignore */ }
-  }, [photo, selectedFolderPath, includeSubfolders, mediaFilter]);
+  }, [photo, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo]);
 
   handleRandomPicksRef.current = handleRandomPicks;
 

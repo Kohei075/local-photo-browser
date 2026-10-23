@@ -48,7 +48,7 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 
 3つのルート: `/` (グリッド), `/viewer/:photoId` (単体ビューア), `/settings`
 
-- **状態管理:** 単一のZustandストア (`stores/appStore.ts`) — 写真リスト、ページネーション、ソート/フィルター、メディア種別フィルター (`mediaFilter`)、配下フォルダ表示 (`includeSubfolders`)、直前に開いた写真 (`lastViewedPhotoId`)、スキャン状態、フォルダツリー
+- **状態管理:** 単一のZustandストア (`stores/appStore.ts`) — 写真リスト、ページネーション、ソート/フィルター、メディア種別フィルター (`mediaFilter`)、日付期間フィルター (`dateField` / `dateFrom` / `dateTo`)、配下フォルダ表示 (`includeSubfolders`)、直前に開いた写真 (`lastViewedPhotoId`)、スキャン状態、フォルダツリー
 - **APIクライアント:** `api/client.ts` のfetchラッパー (型付きジェネリクス)。開発時はViteプロキシで `/api/*` → `:8000` に転送
 - **カスタムフック:** `usePhotos` (取得+無限スクロール), `useSettings`, `useFavorite`, `useKeyboardNav`, `useScreenshot` (全画面のスクリーンショット保存)
 - **i18n:** `i18n/` の軽量自作システム — `translations.ts` の辞書 + `useSyncExternalStore` フック。Contextプロバイダー不要
@@ -64,6 +64,8 @@ cd frontend && npm run build && cd .. && py scripts/start.py
 - **動画対応:** 拡張子判定は `config.py` の `VIDEO_EXTENSIONS`（フロントは `utils/media.ts`）。動画は `<video>` で再生し、グリッド/ビューアにポスターフレームと再生時間を表示。`photos.duration` カラムは `init_db` の軽量マイグレーション（`PRAGMA table_info` + `ALTER TABLE`）で追加
 - **スキャン対象拡張子:** `config.SUPPORTED_EXTENSIONS`（画像+動画）を信頼源とし、`init_db` で `settings.extensions` に同期（拡張子入力欄はUIから廃止済み）
 - **メディア種別フィルター:** サイドバーのプルダウン（すべて/写真のみ/動画のみ）→ `media_type` クエリで `/photos`・`/photos/random`・`neighbors` を絞り込み
+- **日付期間フィルター:** ソートの隣の `SortBar` 内に「基準日付（更新日/作成日/撮影日）+ 開始日・終了日」を配置し、`date_field`/`date_from`/`date_to` クエリで絞り込む（`media_type` と同じく `/photos`・`/photos/random`・`neighbors` に適用）。日付はISO文字列保存なので辞書順比較で判定し、終了日は「翌日未満」でinclusiveにする。基準日付のみ localStorage に永続化し、期間自体はセッション限り
+- **クエリ組み立て:** フォルダ/メディア種別/日付期間の共通パラメータはフロントは `utils/photoParams.ts` の `appendPhotoFilters()`、バックは `routers/photos.py` の `build_query()` に集約
 - **スクリーンショット:** 全画面ビューアのカメラボタンで、表示中のメディア要素を `utils/capture.ts` がcanvasに描画（UIやブラウザクロームは写り込まない／拡大時はコンテナ枠でクリップ）し、`POST /api/screenshot` でPNGを設定の `screenshot_folder` に保存
 - **閲覧位置の復元:** 写真クリック時に `lastViewedPhotoId` を記録し、グリッド復帰時に `scrollIntoView` で復元
 - **フォルダ単位のデータ削除:** `FolderSelectTree` の各フォルダ行のゴミ箱で `POST /api/scan/delete-folders`（`BackgroundTask`）を実行。正規化パス前方一致（SQL LIKEではない＝`_`の誤爆回避）で対象を特定し、Photoレコードと `data/thumbnails/` のキャッシュのみ削除（ファイル本体は残す）。チェック状態依存の一括削除は事故防止のため廃止

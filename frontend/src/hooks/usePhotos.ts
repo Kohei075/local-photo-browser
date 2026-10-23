@@ -1,12 +1,14 @@
 import { useShallow } from 'zustand/react/shallow';
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { api } from '../api/client';
 import { useAppStore } from '../stores/appStore';
+import { appendPhotoFilters } from '../utils/photoParams';
 import type { PhotoListResponse } from '../types';
 
 export function usePhotos() {
   const {
     page, perPage, sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter,
+    dateField, dateFrom, dateTo,
     isLoadingPhotos, setPhotos, appendPhotos, setLoadingPhotos,
   } = useAppStore(useShallow((state) => ({
     page: state.page,
@@ -16,13 +18,22 @@ export function usePhotos() {
     selectedFolderPath: state.selectedFolderPath,
     includeSubfolders: state.includeSubfolders,
     mediaFilter: state.mediaFilter,
+    dateField: state.dateField,
+    dateFrom: state.dateFrom,
+    dateTo: state.dateTo,
     isLoadingPhotos: state.isLoadingPhotos,
     setPhotos: state.setPhotos,
     appendPhotos: state.appendPhotos,
     setLoadingPhotos: state.setLoadingPhotos,
   })));
 
+  // Discard responses of requests that a newer one has already superseded
+  // (e.g. picking the start and end date of the range in quick succession).
+  const requestIdRef = useRef(0);
+
   const fetchPhotos = useCallback(async (pageNum: number = 1, append: boolean = false) => {
+    const requestId = ++requestIdRef.current;
+    const refreshKey = useAppStore.getState().randomKey;
     setLoadingPhotos(true);
     try {
       const params = new URLSearchParams({
@@ -31,21 +42,18 @@ export function usePhotos() {
         sort_by: sortBy,
         sort_order: sortOrder,
       });
-      if (selectedFolderPath !== null) {
-        params.set('folder_path', selectedFolderPath);
-        params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
-      }
-      params.set('media_type', mediaFilter);
+      appendPhotoFilters(params, { selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo });
       const data = await api.get<PhotoListResponse>(`/photos?${params}`, { deduplicate: sortBy !== 'random' });
+      if (requestId !== requestIdRef.current || refreshKey !== useAppStore.getState().randomKey) return;
       if (append) {
         appendPhotos(data.items, data.total, data.page, data.total_pages);
       } else {
         setPhotos(data.items, data.total, data.page, data.per_page, data.total_pages);
       }
     } finally {
-      setLoadingPhotos(false);
+      if (requestId === requestIdRef.current) setLoadingPhotos(false);
     }
-  }, [perPage, sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, setPhotos, appendPhotos, setLoadingPhotos]);
+  }, [perPage, sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, setPhotos, appendPhotos, setLoadingPhotos]);
 
   const loadMore = useCallback(() => {
     if (!isLoadingPhotos) {

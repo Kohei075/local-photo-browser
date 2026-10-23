@@ -14,6 +14,11 @@ export function FavoritesPage() {
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const dateFormatter = useMemo(() => new Intl.DateTimeFormat('ja-JP', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }), []);
 
   const fetchCombinations = useCallback(async () => {
     setLoading(true);
@@ -97,6 +102,12 @@ export function FavoritesPage() {
                 ))}
               </button>
               <div className="favorite-combo-actions">
+                <div className="favorite-combo-created-at">
+                  {t('favorites.createdAt')} :{' '}
+                  <time dateTime={combo.created_at}>
+                    {dateFormatter.format(new Date(combo.created_at))}
+                  </time>
+                </div>
                 <button className="btn btn-sm btn-danger" onClick={() => handleDelete(combo.id)}>
                   {t('favorites.delete')}
                 </button>

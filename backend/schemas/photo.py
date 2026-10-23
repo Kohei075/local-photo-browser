@@ -1,5 +1,5 @@
-from pydantic import BaseModel
-from typing import Optional
+from pydantic import BaseModel, Field
+from typing import Annotated, Literal, Optional
 
 
 class PhotoResponse(BaseModel):
@@ -35,3 +35,18 @@ class NeighborsResponse(BaseModel):
 
 class FavoriteRequest(BaseModel):
     is_favorite: bool
+
+
+class TrashPhotosRequest(BaseModel):
+    photo_ids: list[Annotated[int, Field(strict=True, gt=0)]] = Field(min_length=1)
+
+
+class TrashPhotoFailure(BaseModel):
+    id: int
+    file_name: str
+    reason: Literal["not_found", "trash_failed"]
+
+
+class TrashPhotosResponse(BaseModel):
+    deleted_ids: list[int]
+    failed: list[TrashPhotoFailure]

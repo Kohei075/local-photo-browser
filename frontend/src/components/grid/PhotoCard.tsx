@@ -10,7 +10,8 @@ interface PhotoCardProps {
 
 export const PhotoCard = memo(function PhotoCard({ photo }: PhotoCardProps) {
   const isSelected = useAppStore((state) => state.selectedPhotoIds.includes(photo.id));
-  const isMaxed = useAppStore((state) => state.selectedPhotoIds.length >= 4);
+  const isDeleteMode = useAppStore((state) => state.isDeleteMode);
+  const isMaxed = useAppStore((state) => !state.isDeleteMode && state.selectedPhotoIds.length >= 4);
   const togglePhotoSelection = useAppStore((state) => state.togglePhotoSelection);
   const setLastViewedPhotoId = useAppStore((state) => state.setLastViewedPhotoId);
   const video = isVideo(photo.extension);
@@ -26,9 +27,16 @@ export const PhotoCard = memo(function PhotoCard({ photo }: PhotoCardProps) {
   return (
     <Link
       to={`/viewer/${photo.id}`}
-      className={`photo-card${isSelected ? ' photo-card-selected' : ''}`}
+      className={`photo-card${isSelected ? ' photo-card-selected' : ''}${isDeleteMode ? ' photo-card-delete-mode' : ''}`}
       data-photo-id={photo.id}
-      onClick={() => setLastViewedPhotoId(photo.id)}
+      onClick={(event) => {
+        if (isDeleteMode) {
+          event.preventDefault();
+          togglePhotoSelection(photo);
+        } else {
+          setLastViewedPhotoId(photo.id);
+        }
+      }}
     >
       <div className="photo-card-image">
         <div
@@ -43,6 +51,7 @@ export const PhotoCard = memo(function PhotoCard({ photo }: PhotoCardProps) {
           <input
             type="checkbox"
             className="photo-select-checkbox"
+            aria-label={photo.file_name}
             checked={isSelected}
             disabled={!isSelected && isMaxed}
             readOnly

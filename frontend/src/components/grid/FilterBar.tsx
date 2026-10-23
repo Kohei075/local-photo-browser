@@ -5,19 +5,24 @@ import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
 import { api } from '../../api/client';
 import { isVideo } from '../../utils/media';
+import { appendPhotoFilters } from '../../utils/photoParams';
 import type { PhotoListResponse } from '../../types';
 
 export function FilterBar() {
-  const { selectedFolderPath, includeSubfolders, mediaFilter, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore(useShallow((state) => ({
+  const { selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, selectedPhotoIds, selectedPhotos, togglePhotoSelection, clearPhotoSelection } = useAppStore(useShallow((state) => ({
     selectedFolderPath: state.selectedFolderPath,
     includeSubfolders: state.includeSubfolders,
     mediaFilter: state.mediaFilter,
+    dateField: state.dateField,
+    dateFrom: state.dateFrom,
+    dateTo: state.dateTo,
     selectedPhotoIds: state.selectedPhotoIds,
     selectedPhotos: state.selectedPhotos,
     togglePhotoSelection: state.togglePhotoSelection,
     clearPhotoSelection: state.clearPhotoSelection,
   })));
   const { t } = useTranslation();
+  const isDeleteMode = useAppStore((state) => state.isDeleteMode);
   const navigate = useNavigate();
 
   const handleRandomPicks = useCallback(async () => {
@@ -25,56 +30,60 @@ export function FilterBar() {
       sort_by: 'random',
       per_page: '4',
     });
-    if (selectedFolderPath !== null) {
-      params.set('folder_path', selectedFolderPath);
-      params.set('include_subfolders', includeSubfolders ? 'true' : 'false');
-    }
-    params.set('media_type', mediaFilter);
+    appendPhotoFilters(params, { selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo });
     try {
       const res = await api.get<PhotoListResponse>(`/photos?${params}`);
       if (res.items.length > 0) {
         navigate(`/viewer/${res.items[0].id}`, { state: { randomPicks: res.items } });
       }
     } catch { /* ignore */ }
-  }, [selectedFolderPath, includeSubfolders, mediaFilter, navigate]);
+  }, [selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, navigate]);
 
   const handleViewSelected = useCallback(() => {
-    if (selectedPhotos.length > 0) {
+    if (!isDeleteMode && selectedPhotos.length > 0) {
       navigate(`/viewer/${selectedPhotos[0].id}`, { state: { randomPicks: selectedPhotos } });
     }
-  }, [selectedPhotos, navigate]);
+  }, [isDeleteMode, selectedPhotos, navigate]);
 
   return (
     <div className="filter-bar">
-      <button className="btn btn-sm" onClick={handleRandomPicks}>
-        {t('viewer.randomPicks')}
-      </button>
+      {isDeleteMode ? (
+        <span className="delete-mode-hint" role="status">{t('grid.deleteModeHint', { count: selectedPhotoIds.length })}</span>
+      ) : (
+        <button className="btn btn-sm" onClick={handleRandomPicks}>
+          {t('viewer.randomPicks')}
+        </button>
+      )}
       {selectedPhotoIds.length > 0 && (
         <>
-          <button className="btn btn-sm btn-primary" onClick={handleViewSelected}>
-            {t('grid.viewSelected', { count: selectedPhotoIds.length })}
-          </button>
-          <div className="selection-thumbnails">
-            {selectedPhotos.map((photo) => (
-              <button
-                key={photo.id}
-                className="selection-thumbnail-btn"
-                onClick={() => togglePhotoSelection(photo)}
-                title={photo.file_name}
-              >
-                {isVideo(photo.extension) ? (
-                  <span className="selection-thumbnail selection-thumbnail-video">&#9654;</span>
-                ) : (
-                  <img
-                    src={photo.thumbnail_url}
-                    alt={photo.file_name}
-                    className="selection-thumbnail"
-                  />
-                )}
-                <span className="selection-thumbnail-remove">x</span>
+          {!isDeleteMode && (
+            <>
+              <button className="btn btn-sm btn-primary" onClick={handleViewSelected}>
+                {t('grid.viewSelected', { count: selectedPhotoIds.length })}
               </button>
-            ))}
-          </div>
+              <div className="selection-thumbnails">
+                {selectedPhotos.map((photo) => (
+                  <button
+                    key={photo.id}
+                    className="selection-thumbnail-btn"
+                    onClick={() => togglePhotoSelection(photo)}
+                    title={photo.file_name}
+                  >
+                    {isVideo(photo.extension) ? (
+                      <span className="selection-thumbnail selection-thumbnail-video">&#9654;</span>
+                    ) : (
+                      <img
+                        src={photo.thumbnail_url}
+                        alt={photo.file_name}
+                        className="selection-thumbnail"
+                      />
+                    )}
+                    <span className="selection-thumbnail-remove">x</span>
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
           <button className="btn btn-sm" onClick={clearPhotoSelection}>
             {t('grid.clearSelection')}
           </button>

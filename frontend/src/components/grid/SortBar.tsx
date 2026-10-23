@@ -1,10 +1,13 @@
 import { useShallow } from 'zustand/react/shallow';
 import { useAppStore } from '../../stores/appStore';
 import { useTranslation } from '../../i18n/useTranslation';
-import type { SortBy, SortOrder } from '../../types';
+import type { SortBy, SortOrder, DateField } from '../../types';
 
 export function SortBar() {
-  const { sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos, refreshRandom, gridColumns, setGridColumns } = useAppStore(useShallow((state) => ({
+  const {
+    sortBy, sortOrder, setSortBy, setSortOrder, totalPhotos, refreshRandom, gridColumns, setGridColumns,
+    dateField, dateFrom, dateTo, setDateField, setDateFrom, setDateTo, clearDateRange,
+  } = useAppStore(useShallow((state) => ({
     sortBy: state.sortBy,
     sortOrder: state.sortOrder,
     setSortBy: state.setSortBy,
@@ -13,6 +16,13 @@ export function SortBar() {
     refreshRandom: state.refreshRandom,
     gridColumns: state.gridColumns,
     setGridColumns: state.setGridColumns,
+    dateField: state.dateField,
+    dateFrom: state.dateFrom,
+    dateTo: state.dateTo,
+    setDateField: state.setDateField,
+    setDateFrom: state.setDateFrom,
+    setDateTo: state.setDateTo,
+    clearDateRange: state.clearDateRange,
   })));
   const { t } = useTranslation();
 
@@ -22,6 +32,14 @@ export function SortBar() {
     { value: 'file_name', label: t('grid.sortFileName') },
     { value: 'random', label: t('grid.sortRandom') },
   ];
+
+  const dateFieldOptions: { value: DateField; label: string }[] = [
+    { value: 'modified_at', label: t('grid.sortModified') },
+    { value: 'created_at', label: t('grid.sortCreated') },
+    { value: 'taken_at', label: t('grid.sortTaken') },
+  ];
+
+  const hasDateRange = dateFrom !== '' || dateTo !== '';
 
   const orderLabel = sortBy === 'file_name'
     ? { desc: t('grid.zaOrder'), asc: t('grid.azOrder') }
@@ -56,6 +74,41 @@ export function SortBar() {
             <option value="desc">{orderLabel.desc}</option>
             <option value="asc">{orderLabel.asc}</option>
           </select>
+        )}
+      </div>
+      <div className={`date-range${hasDateRange ? ' date-range-active' : ''}`}>
+        <label>{t('grid.dateRange')}: </label>
+        <select
+          value={dateField}
+          onChange={(e) => setDateField(e.target.value as DateField)}
+        >
+          {dateFieldOptions.map((opt) => (
+            <option key={opt.value} value={opt.value}>{opt.label}</option>
+          ))}
+        </select>
+        <input
+          type="date"
+          value={dateFrom}
+          max={dateTo || undefined}
+          title={t('grid.dateFrom')}
+          onChange={(e) => setDateFrom(e.target.value)}
+        />
+        <span className="date-range-sep">-</span>
+        <input
+          type="date"
+          value={dateTo}
+          min={dateFrom || undefined}
+          title={t('grid.dateTo')}
+          onChange={(e) => setDateTo(e.target.value)}
+        />
+        {hasDateRange && (
+          <button
+            className="btn btn-sm date-range-clear"
+            onClick={clearDateRange}
+            title={t('grid.clearDateRange')}
+          >
+            &times;
+          </button>
         )}
       </div>
       <input

@@ -502,6 +502,14 @@ input:focus, select:focus {
   flex-shrink: 0;
 }
 
+.favorite-combo-created-at {
+  white-space: nowrap;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
 .sidebar-include-subfolders {
   display: flex;
   align-items: center;
@@ -723,9 +731,87 @@ input:focus, select:focus {
 
 .grid-toolbar {
   display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.grid-toolbar-controls {
+  display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.photo-delete-action {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.photo-delete-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.delete-mode-active.btn-danger {
+  background: var(--danger);
+  color: var(--text-on-primary);
+}
+
+.delete-mode-hint {
+  color: var(--danger);
+  font-size: 0.9rem;
+}
+
+.photo-delete-action .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.photo-delete-result {
+  max-width: 260px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
+.photo-delete-dialog {
+  margin: auto;
+  width: min(480px, calc(100% - 32px));
+  padding: 24px;
+  color: var(--text);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+}
+
+.photo-delete-dialog::backdrop {
+  background: var(--overlay-bg);
+  backdrop-filter: blur(4px);
+}
+
+.photo-delete-dialog h3 {
+  margin-bottom: 12px;
+}
+
+.photo-delete-files {
+  margin: 16px 0;
+  padding-left: 24px;
+  overflow-wrap: anywhere;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+
+.photo-delete-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 /* === Sort Bar === */
@@ -755,6 +841,48 @@ input:focus, select:focus {
 
 .sort-refresh-btn {
   font-size: 1.1rem;
+  line-height: 1;
+  padding: 3px 8px;
+}
+
+/* === Date Range Filter === */
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.date-range label {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.date-range select,
+.date-range input[type="date"] {
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+/* Match the native date picker/icon to the app theme (set via data-theme,
+   not prefers-color-scheme) */
+.date-range input[type="date"] {
+  color-scheme: light;
+}
+
+[data-theme="dark"] .date-range input[type="date"] {
+  color-scheme: dark;
+}
+
+.date-range-active input[type="date"] {
+  border-color: var(--primary);
+}
+
+.date-range-sep {
+  color: var(--text-muted);
+}
+
+.date-range-clear {
+  font-size: 1rem;
   line-height: 1;
   padding: 3px 8px;
 }
@@ -921,6 +1049,7 @@ input:focus, select:focus {
 }
 
 .photo-card:hover .photo-select-checkbox,
+.photo-card-delete-mode .photo-select-checkbox,
 .photo-select-checkbox:checked {
   opacity: 1;
 }
@@ -1797,7 +1926,7 @@ input:focus, select:focus {
     align-items: stretch;
   }
 
-  .sort-bar, .filter-bar {
+  .sort-bar, .filter-bar, .date-range {
     flex-wrap: wrap;
   }
 

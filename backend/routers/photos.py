@@ -1,17 +1,41 @@
 import math
 import os
+import logging
+from threading import Lock
+from datetime import date, timedelta
 from typing import Optional
 
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from config import VIDEO_EXTENSIONS
+from config import VIDEO_EXTENSIONS, THUMBNAIL_DIR
 from database import get_db
 from models.photo import Photo
-from schemas.photo import PhotoResponse, PhotoListResponse, NeighborsResponse
+from schemas.photo import (
+    PhotoResponse, PhotoListResponse, NeighborsResponse,
+    TrashPhotosRequest, TrashPhotosResponse, TrashPhotoFailure,
+)
+from services.trash import move_to_trash
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
+_trash_lock = Lock()
+
+# Date columns that the date-range filter can be applied to.
+DATE_FIELD_MAP = {
+    "created_at": Photo.created_at,
+    "modified_at": Photo.modified_at,
+    "taken_at": Photo.taken_at,
+}
+
+
+def _parse_day(day: str) -> Optional[date]:
+    """Parse a 'YYYY-MM-DD' string; return None when it is not a valid date."""
+    try:
+        return date.fromisoformat(day)
+    except ValueError:
+        return None
 
 
 def photo_to_response(photo: Photo) -> PhotoResponse:
@@ -40,6 +64,9 @@ def build_query(
     folder_path: Optional[str] = None,
     include_subfolders: bool = True,
     media_type: str = "all",
+    date_field: str = "modified_at",
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
 ):
     query = db.query(Photo)
     if favorite_only:
@@ -56,6 +83,16 @@ def build_query(
         if not include_subfolders:
             # Exclude paths that have an extra path separator after the prefix
             query = query.filter(~Photo.file_path.like(prefix + "%" + os.sep + "%"))
+    date_col = DATE_FIELD_MAP.get(date_field)
+    if date_col is not None:
+        # Dates are stored as ISO strings, so lexicographic comparison works.
+        if date_from and _parse_day(date_from):
+            query = query.filter(date_col >= date_from)
+        if date_to:
+            end = _parse_day(date_to)
+            if end:
+                # Exclusive upper bound = the day after, so date_to is inclusive
+                query = query.filter(date_col < (end + timedelta(days=1)).isoformat())
     return query
 
 
@@ -69,9 +106,15 @@ def get_photos(
     folder_path: Optional[str] = Query(None),
     include_subfolders: bool = Query(True),
     media_type: str = Query("all"),
+    date_field: str = Query("modified_at"),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    query = build_query(db, favorite_only, folder_path, include_subfolders, media_type)
+    query = build_query(
+        db, favorite_only, folder_path, include_subfolders, media_type,
+        date_field, date_from, date_to,
+    )
     total = query.count()
 
     sort_column_map = {
@@ -108,13 +151,55 @@ def get_random_photo(
     folder_path: Optional[str] = Query(None),
     include_subfolders: bool = Query(True),
     media_type: str = Query("all"),
+    date_field: str = Query("modified_at"),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
-    query = build_query(db, favorite_only, folder_path, include_subfolders, media_type)
+    query = build_query(
+        db, favorite_only, folder_path, include_subfolders, media_type,
+        date_field, date_from, date_to,
+    )
     photo = query.order_by(func.random()).first()
     if not photo:
         raise HTTPException(status_code=404, detail="No photos found")
     return photo_to_response(photo)
+
+
+@router.post("/photos/trash", response_model=TrashPhotosResponse)
+def trash_photos(req: TrashPhotosRequest, db: Session = Depends(get_db)):
+    if not _trash_lock.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="Photo deletion already in progress")
+    deleted_ids = []
+    failed = []
+    try:
+        for photo_id in dict.fromkeys(req.photo_ids):
+            photo = db.get(Photo, photo_id)
+            if photo is None:
+                failed.append(TrashPhotoFailure(id=photo_id, file_name="", reason="not_found"))
+                continue
+            try:
+                move_to_trash(photo.file_path)
+            except Exception:
+                logger.warning("Could not trash photo %s (%s)", photo_id, photo.file_path, exc_info=True)
+                failed.append(TrashPhotoFailure(id=photo_id, file_name=photo.file_name, reason="trash_failed"))
+                continue
+
+            # Persist each success: another file failing must not restore a DB
+            # record whose original has already been moved to the recycle bin.
+            db.delete(photo)
+            db.commit()
+            deleted_ids.append(photo_id)
+            # Only remove our generated cache, never an arbitrary stored path.
+            try:
+                os.remove(os.path.join(THUMBNAIL_DIR, f"{photo_id}.jpg"))
+            except FileNotFoundError:
+                pass
+            except OSError:
+                logger.warning("Could not remove thumbnail for photo %s", photo_id, exc_info=True)
+        return TrashPhotosResponse(deleted_ids=deleted_ids, failed=failed)
+    finally:
+        _trash_lock.release()
 
 
 @router.get("/photos/{photo_id}", response_model=PhotoResponse)
@@ -134,6 +219,9 @@ def get_neighbors(
     folder_path: Optional[str] = Query(None),
     include_subfolders: bool = Query(True),
     media_type: str = Query("all"),
+    date_field: str = Query("modified_at"),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
     db: Session = Depends(get_db),
 ):
     sort_column_map = {
@@ -148,7 +236,10 @@ def get_neighbors(
     if not current:
         raise HTTPException(status_code=404, detail="Photo not found")
 
-    base_query = build_query(db, favorite_only, folder_path, include_subfolders, media_type)
+    base_query = build_query(
+        db, favorite_only, folder_path, include_subfolders, media_type,
+        date_field, date_from, date_to,
+    )
     current_val = getattr(current, sort_by if sort_by in sort_column_map else "created_at")
 
     if sort_order == "desc":

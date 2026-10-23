@@ -33,7 +33,8 @@
       "Bash(tail:*)",
       "Bash(cd \"/c/Users/PC_User/Desktop/Gitリポジトリ/personalDev/pic-gallery\" && npm install 2>&1)",
       "Bash(npm view:*)",
-      "Bash(cd \"/c/Users/PC_User/Desktop/Gitリポジトリ/personalDev/pic-gallery\" && rm -rf node_modules package-lock.json && npm install 2>&1)"
+      "Bash(cd \"/c/Users/PC_User/Desktop/Gitリポジトリ/personalDev/pic-gallery\" && rm -rf node_modules package-lock.json && npm install 2>&1)",
+      "Bash(cd:*)"
     ]
   },
   "spinnerTipsEnabled": false

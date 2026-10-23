@@ -17,12 +17,15 @@ export function PhotoGrid() {
   const observerRef = useRef<HTMLDivElement>(null);
   const initialFetchDone = useRef(false);
 
-  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, randomKey, gridColumns } = useAppStore(useShallow((state) => ({
+  const { sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, randomKey, gridColumns } = useAppStore(useShallow((state) => ({
     sortBy: state.sortBy,
     sortOrder: state.sortOrder,
     selectedFolderPath: state.selectedFolderPath,
     includeSubfolders: state.includeSubfolders,
     mediaFilter: state.mediaFilter,
+    dateField: state.dateField,
+    dateFrom: state.dateFrom,
+    dateTo: state.dateTo,
     randomKey: state.randomKey,
     gridColumns: state.gridColumns,
   })));
@@ -30,7 +33,7 @@ export function PhotoGrid() {
 
   useEffect(() => {
     initialFetchDone.current = false;
-  }, [sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, randomKey]);
+  }, [sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, randomKey]);
 
   useEffect(() => {
     if (!initialFetchDone.current) {
@@ -42,7 +45,7 @@ export function PhotoGrid() {
       initialFetchDone.current = true;
       fetchPhotos(1);
     }
-  }, [fetchPhotos, sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, randomKey, photos.length]);
+  }, [fetchPhotos, sortBy, sortOrder, selectedFolderPath, includeSubfolders, mediaFilter, dateField, dateFrom, dateTo, randomKey, photos.length]);
 
   const handleIntersect = useCallback(
     (entries: IntersectionObserverEntry[]) => {
